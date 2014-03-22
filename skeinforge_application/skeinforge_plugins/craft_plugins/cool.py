@@ -155,6 +155,7 @@ class CoolRepository:
 		self.coolType = settings.MenuButtonDisplay().getFromName('Cool Type:', self)
 		self.orbit = settings.MenuRadio().getFromMenuButtonDisplay(self.coolType, 'Orbit', self, False)
 		self.slowDown = settings.MenuRadio().getFromMenuButtonDisplay(self.coolType, 'Slow Down', self, True)
+		self.slowDownMinSpeed = settings.FloatSpin().getFromValue(0.5, 'Minimum Slow Down Feed Rate (mm/s):', self, 30.0, 1.0)
 		self.maximumCool = settings.FloatSpin().getFromValue(0.0, 'Maximum Cool (Celcius):', self, 10.0, 2.0)
 		self.minimumLayerTime = settings.FloatSpin().getFromValue(0.0, 'Minimum Layer Time (seconds):', self, 120.0, 60.0)
 		self.minimumOrbitalRadius = settings.FloatSpin().getFromValue(0.0, 'Minimum Orbital Radius (millimeters):', self, 20.0, 10.0)
@@ -252,6 +253,8 @@ class CoolSkein:
 	def getCoolMove(self, line, location, splitLine):
 		'Get cool line according to time spent on layer.'
 		self.feedRateMinute = gcodec.getFeedRateMinute(self.feedRateMinute, splitLine)
+		if self.multiplier * self.feedRateMinute < self.repository.slowDownMinSpeed.value * 60:
+			return self.distanceFeedRate.getLineWithFeedRate(self.repository.slowDownMinSpeed.value * 60, line, splitLine)
 		return self.distanceFeedRate.getLineWithFeedRate(self.multiplier * self.feedRateMinute, line, splitLine)
 
 	def getCraftedGcode(self, gcodeText, repository):

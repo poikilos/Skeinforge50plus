@@ -12,7 +12,7 @@ Skeinforge50 (the last release from Enrique) with a few tweaks:
   - force fan on bridging layers (requires enabling Inset -> Infill in direction of bridge)
   - maximum layer time time for fan 
   - turn on fan at full speed on layers less than N sec 
-
+  - when using slow-down, set minimum feed rate
 
 * Theodleif improvement to skirt plugin to add a "brim" (see http://forums.reprap.org/read.php?1,136147,136147#msg-136147)
   - brim width in number of loops
