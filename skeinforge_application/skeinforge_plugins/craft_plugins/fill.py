@@ -130,6 +130,18 @@ Default is three.
 
 Defines the number of solid layers that are at the bottom, top, plateaus and overhang.  With a value of zero, the entire object will be composed of a sparse infill, and water could flow right through it.  With a value of one, water will leak slowly through the surface and with a value of three, the object could be watertight.  The higher the solid surface thickness, the stronger and heavier the object will be.
 
+===Enable automatic solid surface thickness===
+When enabled, the value for Solid Surface Thickness is ignore. The number of solid layers is calculated by dividing your desired solid layer height by the current layer thickness.
+
+===Desired solid surface thickness(mm)===
+This determines the maximum thickness of the solid surface, when automatic solid surface thickness is enabled.
+
+===Force even/odd top layer===
+This setting lets you tweak the final layer value in order to prefer odd or even layers. Fill patterns are different on odd and even solid layers, so this function lets you force the fill type that you prefer.
+
+===Disable top layers(for cups and vases)===
+This will ignore the last x number of layers in a print, where x is number of layers set by Solid Surface Thickness. This is usefull for print cups, vases or other hollow models where you don't want to print the top. The default setting is off.
+
 ===Start From Choice===
 Default is 'Lower Left'.
 
@@ -776,15 +788,18 @@ class FillRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Fill', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Fill')
 		self.activateFill = settings.BooleanSetting().getFromValue('Activate Fill', self, True)
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Diaphragm -', self )
 		self.diaphragmPeriod = settings.IntSpin().getFromValue( 20, 'Diaphragm Period (layers):', self, 200, 100 )
 		self.diaphragmThickness = settings.IntSpin().getFromValue( 0, 'Diaphragm Thickness (layers):', self, 5, 0 )
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Extra Shells -', self )
 		self.extraShellsAlternatingSolidLayer = settings.IntSpin().getFromValue( 0, 'Extra Shells on Alternating Solid Layer (layers):', self, 3, 2 )
 		self.extraShellsBase = settings.IntSpin().getFromValue( 0, 'Extra Shells on Base (layers):', self, 3, 1 )
 		self.extraShellsSparseLayer = settings.IntSpin().getFromValue( 0, 'Extra Shells on Sparse Layer (layers):', self, 3, 1 )
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Grid -', self )
 		self.gridCircleSeparationOverEdgeWidth = settings.FloatSpin().getFromValue(0.0, 'Grid Circle Separation over Perimeter Width (ratio):', self, 1.0, 0.2)
@@ -792,6 +807,7 @@ class FillRepository:
 		self.gridJunctionSeparationBandHeight = settings.IntSpin().getFromValue( 0, 'Grid Junction Separation Band Height (layers):', self, 20, 10 )
 		self.gridJunctionSeparationOverOctogonRadiusAtEnd = settings.FloatSpin().getFromValue( 0.0, 'Grid Junction Separation over Octogon Radius At End (ratio):', self, 0.8, 0.0 )
 		self.gridJunctionSeparationOverOctogonRadiusAtMiddle = settings.FloatSpin().getFromValue( 0.0, 'Grid Junction Separation over Octogon Radius At Middle (ratio):', self, 0.8, 0.0 )
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Infill -', self )
 		self.infillBeginRotation = settings.FloatSpin().getFromValue( 0.0, 'Infill Begin Rotation (degrees):', self, 90.0, 45.0 )
@@ -805,9 +821,32 @@ class FillRepository:
 		self.infillPatternLine = settings.Radio().getFromRadio( infillLatentStringVar, 'Line', self, True )
 		self.infillPerimeterOverlap = settings.FloatSpin().getFromValue( 0.0, 'Infill Perimeter Overlap (ratio):', self, 0.4, 0.15 )
 		self.infillSolidity = settings.FloatSpin().getFromValue( 0.04, 'Infill Solidity (ratio):', self, 0.3, 0.2 )
+
 		settings.LabelSeparator().getFromRepository(self)
 		self.sharpestAngle = settings.FloatSpin().getFromValue(50.0, 'Sharpest Angle (degrees):', self, 70.0, 60.0)
 		self.solidSurfaceThickness = settings.IntSpin().getFromValue(0, 'Solid Surface Thickness (layers):', self, 5, 3)
+		
+		self.automaticSurfaceThickness = settings.BooleanSetting().getFromValue( 'Enable automatic solid surface thickness', self, False)
+		self.desiredSurfaceThickness = settings.FloatSpin().getFromValue(0.0, 'Desired solid surface thickness (mm):', self, 30.0, 0.75)
+		self.finalLayer = settings.MenuButtonDisplay().getFromName('Force even/odd top layer:', self)
+		self.finalLayerOff = settings.MenuRadio().getFromMenuButtonDisplay(self.finalLayer, 'Off', self, True)
+		self.finalLayerOdd = settings.MenuRadio().getFromMenuButtonDisplay(self.finalLayer, 'Force odd top layer', self, False)
+		self.finalLayerEven = settings.MenuRadio().getFromMenuButtonDisplay(self.finalLayer, 'Force even top layer', self, False)
+		
+		self.cupVase = settings.MenuButtonDisplay().getFromName('Disable top layers(for cups and vases):', self)
+		self.cupVaseOff = settings.MenuRadio().getFromMenuButtonDisplay(self.cupVase, 'Off', self, True)
+		self.cupVaseTop = settings.MenuRadio().getFromMenuButtonDisplay(self.cupVase, 'Disable top layers', self, False)
+		
+		settings.LabelSeparator().getFromRepository(self)
+		self.layerLimit = settings.MenuButtonDisplay().getFromName('Object printing percentage/layer limit:', self)
+		self.layerLimitOff = settings.MenuRadio().getFromMenuButtonDisplay(self.layerLimit, 'Print entire object', self, True)
+		self.layerLimitOneLayer = settings.MenuRadio().getFromMenuButtonDisplay(self.layerLimit, 'Only print 1 layer', self, False)
+		self.layerLimitPercentage = settings.MenuRadio().getFromMenuButtonDisplay(self.layerLimit, 'Print x percentage of object', self, False)
+		self.layerLimitCustom = settings.MenuRadio().getFromMenuButtonDisplay(self.layerLimit, 'Print x layers of object', self, False)
+		self.layerPercentage = settings.FloatSpin().getFromValue(0.0, 'Percentage of object to print:', self, 100.0, 1.0)
+		self.layerLayers = settings.FloatSpin().getFromValue(0.0, 'Number of layers to print:', self, 5000.0, 2.0)
+		settings.LabelSeparator().getFromRepository(self)
+
 		self.startFromChoice = settings.MenuButtonDisplay().getFromName('Start From Choice:', self)
 		self.startFromLowerLeft = settings.MenuRadio().getFromMenuButtonDisplay(self.startFromChoice, 'Lower Left', self, True)
 		self.startFromNearest = settings.MenuRadio().getFromMenuButtonDisplay(self.startFromChoice, 'Nearest', self, False)
@@ -849,8 +888,8 @@ class FillSkein:
 
 	def addFill(self, layerIndex):
 		'Add fill to the carve layer.'
-#		if layerIndex > 2:
-#			return
+		#print 'Layer index:' + str(layerIndex) + '\n'
+
 		settings.printProgressByNumber(layerIndex, len(self.rotatedLayers), 'fill')
 		arounds = []
 		endpoints = []
@@ -863,6 +902,7 @@ class FillSkein:
 		pixelTable = {}
 		reverseRotation = complex(layerRotation.real, - layerRotation.imag)
 		rotatedLayer = self.rotatedLayers[layerIndex]
+			
 		self.isDoubleJunction = True
 		self.isJunctionWide = True
 		surroundingCarves = []
@@ -1116,6 +1156,10 @@ class FillSkein:
 			self.nestedRing.edgePaths.append(self.thread)
 		self.thread.append(location.dropAxis())
 
+	@staticmethod	
+	def is_even(i):
+		return (i % 2) == 0
+
 	def getCraftedGcode( self, repository, gcodeText ):
 		'Parse gcode text and store the bevel gcode.'
 		self.repository = repository
@@ -1151,12 +1195,68 @@ class FillSkein:
 			self.setGridVariables(repository)
 		self.infillBeginRotation = math.radians( repository.infillBeginRotation.value )
 		self.infillOddLayerExtraRotation = math.radians( repository.infillOddLayerExtraRotation.value )
-		self.solidSurfaceThickness = int( round( self.repository.solidSurfaceThickness.value ) )
-		self.doubleSolidSurfaceThickness = self.solidSurfaceThickness + self.solidSurfaceThickness
+		
+		if self.repository.automaticSurfaceThickness.value == True:
+			print 'Automatic solid surface thickness enabled\n'
+		       
+			if repository.finalLayerOff.value == True:
+				self.solidSurfaceThickness = int( round( self.repository.desiredSurfaceThickness.value / self.layerHeight) )
+				
+			if repository.finalLayerOdd.value == True:
+				print 'Odd final layer enabled\n'
+				self.solidSurfaceThickness = int( round( self.repository.desiredSurfaceThickness.value / self.layerHeight) )
+				temp = self.solidSurfaceThickness
+				if self.is_even(temp) == True:
+					self.solidSurfaceThickness += 1	       
+
+			if repository.finalLayerEven.value == True:
+				print 'Even final layer enabled\n'
+				self.solidSurfaceThickness = int( round( self.repository.desiredSurfaceThickness.value / self.layerHeight) )
+				temp = self.solidSurfaceThickness
+				if self.is_even(temp) == False:
+					self.solidSurfaceThickness += 1
+					
+					
+
+			self.doubleSolidSurfaceThickness = self.solidSurfaceThickness + self.solidSurfaceThickness
+			print 'Desired solid surface thickness=' + repr(self.repository.desiredSurfaceThickness.value) + 'mm\n'
+			print 'Number of solid surface layers=' + repr(self.solidSurfaceThickness) + '\n'
+
+		else:
+			self.solidSurfaceThickness = int( round( self.repository.solidSurfaceThickness.value ) )
+			self.doubleSolidSurfaceThickness = self.solidSurfaceThickness + self.solidSurfaceThickness
+			print 'Manual solid surface thickness set to ' +repr(self.solidSurfaceThickness)+' layers.\n'
+		
 		for lineIndex in xrange(self.lineIndex, len(self.lines)):
 			self.parseLine( lineIndex )
+
+		if repository.cupVaseOff.value == True:
+			if repository.layerLimitOff.value == True:
+				print 'Layer percentage\limit off'
+				for layerIndex in xrange(len(self.rotatedLayers)):
+					self.addFill(layerIndex)
+			if repository.layerLimitOneLayer.value == True:
+				print 'Printing a single layer'
+				self.addFill(0)
+			if repository.layerLimitPercentage.value == True:
+				temp = int(round((repository.layerPercentage.value/100.0) * len(self.rotatedLayers)))
+				print 'Printing ' + repr(temp) +' layers of object (' + repr(repository.layerPercentage.value) +'% of layer total)'
+				for layerIndex in xrange(temp):
+					self.addFill(layerIndex)
+			if repository.layerLimitCustom.value == True:
+				if repository.layerLayers.value <= len(self.rotatedLayers):
+					print 'Printing ' + repr(int(round(repository.layerLayers.value))) +' layers of object'
+					for layerIndex in xrange(int(round(repository.layerLayers.value))):
+						self.addFill(layerIndex)
+				else:
+					print 'Overriding custom layer limit: Not enough layers in object'
 		for layerIndex in xrange(len(self.rotatedLayers)):
 			self.addFill(layerIndex)
+					
+		if repository.cupVaseTop.value == True:
+			for layerIndex in xrange(len(self.rotatedLayers)-self.solidSurfaceThickness):
+				self.addFill(layerIndex)
+               
 		self.distanceFeedRate.addLines( self.lines[ self.shutdownLineIndex : ] )
 		return self.distanceFeedRate.output.getvalue()
 
