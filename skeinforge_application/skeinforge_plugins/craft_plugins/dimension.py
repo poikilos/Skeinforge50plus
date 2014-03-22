@@ -30,13 +30,6 @@ When selected, the extrusion distance output will be the total extrusion distanc
 ====Relative Extrusion Distance====
 When selected, the extrusion distance output will be the extrusion distance from the last gcode line.
 
-===Extruder Retraction Speed===
-Default is 13.3 mm/s.
-
-Defines the extruder retraction feed rate.  A high value will allow the retraction operation to complete before much material oozes out.  If your extruder can handle it, this value should be much larger than your feed rate.
-
-As an example, I have a feed rate of 48 mm/s and a 'Extruder Retraction Speed' of 150 mm/s.
-
 ===Filament===
 ====Filament Diameter====
 Default is 2.8 millimeters.
@@ -57,15 +50,28 @@ Default: 91234.0
 
 Defines the maximum E value before it is reset with the 'G92 E0' command line.  The reason it is reset only after the maximum E value is reached is because at least one firmware takes time to reset.  The problem with waiting until the E value is high before resetting is that more characters are sent.  So if your firmware takes a lot of time to reset, set this parameter to a high value, if it doesn't set this parameter to a low value or even zero.
 
+===Retraction===
+===Retract Within Island===
+Default is off.
+
+When selected, retraction will work even when the next thread is within the same island.  If it is not selected, retraction will only work when crossing a boundary.
+
 ===Minimum Travel for Retraction===
 Default: 1.0 millimeter
 
 Defines the minimum distance that the extruder head has to travel from the end of one thread to the beginning of another, in order to trigger the extruder retraction.  Setting this to a high value means the extruder will retract only occasionally, setting it to a low value means the extruder will retract most of the time.
 
-===Retract Within Island===
+===Firmware Retraction===
 Default is off.
 
-When selected, retraction will work even when the next thread is within the same island.  If it is not selected, retraction will only work when crossing a boundary.
+When selected, retraction will be invoked via issuing G10/G11 codes which the firmware will execute according to its own configuration.  If it is not selected, retraction will be executed using the following retraction speed and distances.
+
+===Extruder Retraction Speed===
+Default is 13.3 mm/s.
+
+Defines the extruder retraction feed rate.  A high value will allow the retraction operation to complete before much material oozes out.  If your extruder can handle it, this value should be much larger than your feed rate.
+
+As an example, I have a feed rate of 48 mm/s and a 'Extruder Retraction Speed' of 150 mm/s.
 
 ===Retraction Distance===
 Default is zero.
@@ -153,15 +159,17 @@ class DimensionRepository:
 		self.extrusionDistanceFormatChoiceLabel = settings.LabelDisplay().getFromName('Extrusion Distance Format Choice: ', self )
 		settings.Radio().getFromRadio( extrusionDistanceFormatLatentStringVar, 'Absolute Extrusion Distance', self, True )
 		self.relativeExtrusionDistance = settings.Radio().getFromRadio( extrusionDistanceFormatLatentStringVar, 'Relative Extrusion Distance', self, False )
-		self.extruderRetractionSpeed = settings.FloatSpin().getFromValue( 4.0, 'Extruder Retraction Speed (mm/s):', self, 34.0, 13.3 )
+		self.maximumEValueBeforeReset = settings.FloatSpin().getFromValue(0.0, 'Maximum E Value before Reset (float):', self, 999999.9, 91234.0)
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Filament -', self )
 		self.filamentDiameter = settings.FloatSpin().getFromValue(1.0, 'Filament Diameter (mm):', self, 6.0, 2.8)
 		self.filamentPackingDensity = settings.FloatSpin().getFromValue(0.7, 'Filament Packing Density (ratio):', self, 1.0, 0.85)
 		settings.LabelSeparator().getFromRepository(self)
-		self.maximumEValueBeforeReset = settings.FloatSpin().getFromValue(0.0, 'Maximum E Value before Reset (float):', self, 999999.9, 91234.0)
-		self.minimumTravelForRetraction = settings.FloatSpin().getFromValue(0.0, 'Minimum Travel for Retraction (millimeters):', self, 2.0, 1.0)
+		settings.LabelDisplay().getFromName('- Retraction -', self )
 		self.retractWithinIsland = settings.BooleanSetting().getFromValue('Retract Within Island', self, False)
+		self.minimumTravelForRetraction = settings.FloatSpin().getFromValue(0.0, 'Minimum Travel for Retraction (millimeters):', self, 2.0, 1.0)
+		self.firmwareRetraction = settings.BooleanSetting().getFromValue('Firmware Retraction (via G10/G11)', self, False)
+		self.extruderRetractionSpeed = settings.FloatSpin().getFromValue( 4.0, 'Extruder Retraction Speed (mm/s):', self, 34.0, 13.3 )
 		self.retractionDistance = settings.FloatSpin().getFromValue( 0.0, 'Retraction Distance (millimeters):', self, 100.0, 0.0 )
 		self.restartExtraDistance = settings.FloatSpin().getFromValue( 0.0, 'Restart Extra Distance (millimeters):', self, 100.0, 0.0 )
 		self.executeTitle = 'Dimension'
@@ -383,15 +391,21 @@ class DimensionSkein:
 			self.layerIndex += 1
 			settings.printProgress(self.layerIndex, 'dimension')
 		elif firstWord == 'M101':
-			self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
-			if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 
-				if not self.repository.relativeExtrusionDistance.value:
-					self.distanceFeedRate.addLine('G92 E0')
-					self.totalExtrusionDistance = 0.0
+			if self.repository.firmwareRetraction.value:
+				self.distanceFeedRate.addLine('G11')
+			else:
+				self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
+				if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 
+					if not self.repository.relativeExtrusionDistance.value:
+						self.distanceFeedRate.addLine('G92 E0')
+						self.totalExtrusionDistance = 0.0
 			self.isExtruderActive = True
 		elif firstWord == 'M103':
-			self.retractionRatio = self.getRetractionRatio(lineIndex)
-			self.addLinearMoveExtrusionDistanceLine(-self.repository.retractionDistance.value * self.retractionRatio)
+			if self.repository.firmwareRetraction.value:
+				self.distanceFeedRate.addLine('G10')
+			else:
+				self.retractionRatio = self.getRetractionRatio(lineIndex)
+				self.addLinearMoveExtrusionDistanceLine(-self.repository.retractionDistance.value * self.retractionRatio)
 			self.isExtruderActive = False
 		elif firstWord == 'M108':
 			self.flowRate = float( splitLine[1][1 :] )
