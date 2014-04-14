@@ -788,18 +788,18 @@ class FillRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Fill', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Fill')
 		self.activateFill = settings.BooleanSetting().getFromValue('Activate Fill', self, True)
-
+                
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Diaphragm -', self )
 		self.diaphragmPeriod = settings.IntSpin().getFromValue( 20, 'Diaphragm Period (layers):', self, 200, 100 )
 		self.diaphragmThickness = settings.IntSpin().getFromValue( 0, 'Diaphragm Thickness (layers):', self, 5, 0 )
-
+                
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Extra Shells -', self )
 		self.extraShellsAlternatingSolidLayer = settings.IntSpin().getFromValue( 0, 'Extra Shells on Alternating Solid Layer (layers):', self, 3, 2 )
 		self.extraShellsBase = settings.IntSpin().getFromValue( 0, 'Extra Shells on Base (layers):', self, 3, 1 )
 		self.extraShellsSparseLayer = settings.IntSpin().getFromValue( 0, 'Extra Shells on Sparse Layer (layers):', self, 3, 1 )
-
+                
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Grid -', self )
 		self.gridCircleSeparationOverEdgeWidth = settings.FloatSpin().getFromValue(0.0, 'Grid Circle Separation over Perimeter Width (ratio):', self, 1.0, 0.2)
@@ -807,7 +807,7 @@ class FillRepository:
 		self.gridJunctionSeparationBandHeight = settings.IntSpin().getFromValue( 0, 'Grid Junction Separation Band Height (layers):', self, 20, 10 )
 		self.gridJunctionSeparationOverOctogonRadiusAtEnd = settings.FloatSpin().getFromValue( 0.0, 'Grid Junction Separation over Octogon Radius At End (ratio):', self, 0.8, 0.0 )
 		self.gridJunctionSeparationOverOctogonRadiusAtMiddle = settings.FloatSpin().getFromValue( 0.0, 'Grid Junction Separation over Octogon Radius At Middle (ratio):', self, 0.8, 0.0 )
-
+                
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Infill -', self )
 		self.infillBeginRotation = settings.FloatSpin().getFromValue( 0.0, 'Infill Begin Rotation (degrees):', self, 90.0, 45.0 )
@@ -821,7 +821,7 @@ class FillRepository:
 		self.infillPatternLine = settings.Radio().getFromRadio( infillLatentStringVar, 'Line', self, True )
 		self.infillPerimeterOverlap = settings.FloatSpin().getFromValue( 0.0, 'Infill Perimeter Overlap (ratio):', self, 0.4, 0.15 )
 		self.infillSolidity = settings.FloatSpin().getFromValue( 0.04, 'Infill Solidity (ratio):', self, 0.3, 0.2 )
-
+                
 		settings.LabelSeparator().getFromRepository(self)
 		self.sharpestAngle = settings.FloatSpin().getFromValue(50.0, 'Sharpest Angle (degrees):', self, 70.0, 60.0)
 		self.solidSurfaceThickness = settings.IntSpin().getFromValue(0, 'Solid Surface Thickness (layers):', self, 5, 3)
@@ -846,7 +846,7 @@ class FillRepository:
 		self.layerPercentage = settings.FloatSpin().getFromValue(0.0, 'Percentage of object to print:', self, 100.0, 1.0)
 		self.layerLayers = settings.FloatSpin().getFromValue(0.0, 'Number of layers to print:', self, 5000.0, 2.0)
 		settings.LabelSeparator().getFromRepository(self)
-
+                
 		self.startFromChoice = settings.MenuButtonDisplay().getFromName('Start From Choice:', self)
 		self.startFromLowerLeft = settings.MenuRadio().getFromMenuButtonDisplay(self.startFromChoice, 'Lower Left', self, True)
 		self.startFromNearest = settings.MenuRadio().getFromMenuButtonDisplay(self.startFromChoice, 'Nearest', self, False)
@@ -1160,6 +1160,8 @@ class FillSkein:
 	def is_even(i):
 		return (i % 2) == 0
 
+
+
 	def getCraftedGcode( self, repository, gcodeText ):
 		'Parse gcode text and store the bevel gcode.'
 		self.repository = repository
@@ -1215,8 +1217,6 @@ class FillSkein:
 				temp = self.solidSurfaceThickness
 				if self.is_even(temp) == False:
 					self.solidSurfaceThickness += 1
-					
-					
 
 			self.doubleSolidSurfaceThickness = self.solidSurfaceThickness + self.solidSurfaceThickness
 			print 'Desired solid surface thickness=' + repr(self.repository.desiredSurfaceThickness.value) + 'mm\n'
@@ -1250,8 +1250,8 @@ class FillSkein:
 						self.addFill(layerIndex)
 				else:
 					print 'Overriding custom layer limit: Not enough layers in object'
-		for layerIndex in xrange(len(self.rotatedLayers)):
-			self.addFill(layerIndex)
+		                        for layerIndex in xrange(len(self.rotatedLayers)):
+			                    self.addFill(layerIndex)
 					
 		if repository.cupVaseTop.value == True:
 			for layerIndex in xrange(len(self.rotatedLayers)-self.solidSurfaceThickness):
