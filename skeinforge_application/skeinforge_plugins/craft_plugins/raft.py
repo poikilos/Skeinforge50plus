@@ -389,6 +389,8 @@ class RaftRepository:
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Support -', self)
 		self.supportCrossHatch = settings.BooleanSetting().getFromValue('Support Cross Hatch', self, False)
+		self.supportFlowRateOverOperatingFlowRateFirstLayer = settings.FloatSpin().getFromValue(
+			0.7, 'Support Flow Rate over Operating Flow Rate - first layer (ratio):', self, 1.1, 1.0)
 		self.supportFlowRateOverOperatingFlowRate = settings.FloatSpin().getFromValue(
 			0.7, 'Support Flow Rate over Operating Flow Rate (ratio):', self, 1.1, 1.0)
 		self.supportGapOverPerimeterExtrusionWidth = settings.FloatSpin().getFromValue(
@@ -709,6 +711,8 @@ class RaftSkein:
 		feedRateMinuteMultiplied = self.operatingFeedRateMinute
 		supportFlowRateMultiplied = self.supportFlowRate
 		if self.layerIndex == 0:
+			'layer 0 fix'
+			supportFlowRateMultiplied = self.supportFlowRateFirstLayer
 			feedRateMinuteMultiplied *= self.objectFirstLayerFeedRateInfillMultiplier
 			if supportFlowRateMultiplied != None:
 				supportFlowRateMultiplied *= self.objectFirstLayerFlowRateInfillMultiplier
@@ -931,6 +935,7 @@ class RaftSkein:
 				self.operatingFlowRate = float(splitLine[1])
 				self.oldFlowRate = self.operatingFlowRate
 				self.supportFlowRate = self.operatingFlowRate * self.repository.supportFlowRateOverOperatingFlowRate.value
+				self.supportFlowRateFirstLayer = self.operatingFlowRate * self.repository.supportFlowRateOverOperatingFlowRateFirstLayer.value
 			elif firstWord == '(<sharpestProduct>':
 				self.sharpestProduct = float(splitLine[1])
 			elif firstWord == '(<supportLayersTemperature>':

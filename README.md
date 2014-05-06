@@ -14,7 +14,7 @@ Skeinforge50 (the last release from Enrique) with a few tweaks:
   - turn on fan at full speed on layers less than N sec 
   - when using slow-down, set minimum feed rate
 
-* Theodleif improvement to skirt plugin to add a "brim" (see http://forums.reprap.org/read.php?1,136147,136147#msg-136147)
+* Theodleif improvement to Skirt plugin to add a "brim" (see http://forums.reprap.org/read.php?1,136147,136147#msg-136147)
   - brim width in number of loops
 
 * Dimension plugin improvements
@@ -26,3 +26,5 @@ Skeinforge50 (the last release from Enrique) with a few tweaks:
   - Forcing even/odd top layers. The fill patterns on the top layer of a surface are different, depending on whether there are an even or odd number of solid surface layers. I prefer to see the even layers, which use vertical lines. Odd layers tend to use slanted lines, which print more slowly and can be a bit messier. You can now choose whether you want the final layer to be even or odd.
  - You can now determine how much of the object to print using the 'Object printing percentage/layer limit' feature. This lets you print 1 layer of an object, which can be handy for printer calibration. It also lets you print a custom percentage of the object, or a custom number of layers. This feature is disabled by default, and is ignored if you have Disable Top Layers enabled.
 
+* svanteg improvement to Raft plugin for first layer support (see http://forums.reprap.org/read.php?154,350315,350315#msg-350315)
+  - support flow rate over operating rate (first layer)
