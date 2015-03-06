@@ -24,9 +24,9 @@ If you also want an insulating skirt around the entire object, set 'Layers To' t
 changed by Theodleif on 7/1/2012, added "the brim", look at http://forums.reprap.org/read.php?1,136147,136147#msg-136147
 
 ==Operation==
-The default 'Activate Skirt' checkbox is off.  When it is on, the functions described below will work, when it is off, nothing will be done.
+The default 'Activate Skirt' checkbox is off.  When it is on, the functions described below in 'Skirt Settings' will work, when it is off, nothing will be done.
 
-==Settings==
+==Skirt Settings==
 ===Convex===
 Default is on.
 
@@ -35,17 +35,21 @@ When selected, the skirt will be convex, going around the model with only convex
 ===Gap over Perimeter Width===
 Default is three.
 
-Defines the ratio of the gap between the object and the skirt over the edge width.  If the ratio is too low, the skirt will connect to the object, if the ratio is too high, the skirt willl not provide much insulation for the object.
+Defines the ratio of the gap between the object and the skirt over the edge width.  If the ratio is too low, the skirt will connect to the object, if the ratio is too high, the skirt will not provide much insulation for the object.
 
 ===Layers To===
 Default is a one.
 
 Defines the number of layers of the skirt.  If you want only an outline, set 'Layers To' to one.  If you want an insulating skirt around the entire object, set 'Layers To' to a huge number, like 912345678.
 
+==Operation==
+The default 'Activate Brim' checkbox is off.  When it is on, the functions described below in 'Brim Settings' will work, when it is off, nothing will be done.
+
+==Brim Settings==
 ===Brim Width===
 Default is zero.
 
-Defines the numbers of skirt lines per layer. Used to prevent curling of edges. If you want to use the brim, set Gap over Perimeter Width to 0.5.
+Defines the numbers of brim lines per layer. Used to prevent curling of edges. You can combine Skirt and Brim as you like.
 
 ==Examples==
 The following examples skirt the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and skirt.py.
@@ -97,7 +101,7 @@ def getCraftedTextFromText(gcodeText, repository=None):
 		return gcodeText
 	if repository == None:
 		repository = settings.getReadRepository(SkirtRepository())
-	if not repository.activateSkirt.value:
+	if not repository.activateSkirt.value and not repository.activateBrim.value:
 		return gcodeText
 	return SkirtSkein().getCraftedGcode(gcodeText, repository)
 
@@ -138,10 +142,15 @@ class SkirtRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName(
 			fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Skirt', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skirt')
+		settings.LabelDisplay().getFromName('- Skirt -', self )
 		self.activateSkirt = settings.BooleanSetting().getFromValue('Activate Skirt', self, False)
+		self.baseShells = settings.IntSpin().getSingleIncrementFromValue(1, 'Base Shells (integer)', self, 10, 1)
 		self.convex = settings.BooleanSetting().getFromValue('Convex:', self, True)
-		self.gapOverEdgeWidth = settings.FloatSpin().getFromValue(0.0, 'Gap over Perimeter Width (ratio):', self, 5.0, 3.0)
+		self.gapOverEdgeWidth = settings.FloatSpin().getFromValue(1.0, 'Gap over Perimeter Width (ratio):', self, 5.0, 3.0)
 		self.layersTo = settings.IntSpin().getSingleIncrementFromValue(0, 'Layers To (index):', self, 912345678, 1)
+		settings.LabelSeparator().getFromRepository(self)
+		settings.LabelDisplay().getFromName('- Brim -', self )
+		self.activateBrim = settings.BooleanSetting().getFromValue('Activate Brim', self, False)
 		self.brimWidth = settings.IntSpin().getSingleIncrementFromValue(0, 'Brim Width:', self, 50, 0)
 		self.executeTitle = 'Skirt'
 
@@ -162,7 +171,6 @@ class SkirtSkein:
 		self.isExtruderActive = False
 		self.isSupportLayer = False
 		self.layerIndex = -1
-		self.brimLine = 0
 		self.lineIndex = 0
 		self.lines = None
 		self.oldFlowRate = None
@@ -173,19 +181,20 @@ class SkirtSkein:
 		self.travelFeedRateMinute = 957.0
 		self.unifiedLoop = LoopCrossDictionary()
 
-	def addBrim(self, z):
+	def addBrimAndBaseSkirt(self, z):
 		'Add brim at z to gcode output.'
-		self.setSkirtFeedFlowTemperature()
-		self.distanceFeedRate.addLine('(<skirt>)')
-		oldTemperature = self.oldTemperatureInput
-		self.addTemperatureLineIfDifferent(self.skirtTemperature)
-		self.addFlowRate(self.skirtFlowRate)
-		for outsetLoop in self.outsetBrimLoops:
-			closedLoop = outsetLoop + [outsetLoop[0]]
-			self.distanceFeedRate.addGcodeFromFeedRateThreadZ(self.feedRateMinute, closedLoop, self.travelFeedRateMinute, z)
-		self.addFlowRate(self.oldFlowRate)
-		self.addTemperatureLineIfDifferent(oldTemperature)
-		self.distanceFeedRate.addLine('(</skirt>)')
+		if (self.repository.baseShells.value > 0) or (self.repository.brimWidth.value > 0):
+			self.setSkirtFeedFlowTemperature()
+			self.distanceFeedRate.addLine('(<skirt>)')
+			oldTemperature = self.oldTemperatureInput
+			self.addTemperatureLineIfDifferent(self.skirtTemperature)
+			self.addFlowRate(self.skirtFlowRate)
+			for outsetLoop in self.baseOutsetLoops:
+				closedLoop = outsetLoop + [outsetLoop[0]]
+				self.distanceFeedRate.addGcodeFromFeedRateThreadZ(self.feedRateMinute, closedLoop, self.travelFeedRateMinute, z)
+			self.addFlowRate(self.oldFlowRate)
+			self.addTemperatureLineIfDifferent(oldTemperature)
+			self.distanceFeedRate.addLine('(</skirt>)')
 
 	def addFlowRate(self, flowRate):
 		'Add a line of temperature if different.'
@@ -199,9 +208,10 @@ class SkirtSkein:
 		oldTemperature = self.oldTemperatureInput
 		self.addTemperatureLineIfDifferent(self.skirtTemperature)
 		self.addFlowRate(self.skirtFlowRate)
-		for outsetLoop in self.outsetLoops:
-			closedLoop = outsetLoop + [outsetLoop[0]]
-			self.distanceFeedRate.addGcodeFromFeedRateThreadZ(self.feedRateMinute, closedLoop, self.travelFeedRateMinute, z)
+		if self.layerIndex > 0:
+			for outsetLoop in self.upperOutsetLoops:
+				closedLoop = outsetLoop + [outsetLoop[0]]
+				self.distanceFeedRate.addGcodeFromFeedRateThreadZ(self.feedRateMinute, closedLoop, self.travelFeedRateMinute, z)
 		self.addFlowRate(self.oldFlowRate)
 		self.addTemperatureLineIfDifferent(oldTemperature)
 		self.distanceFeedRate.addLine('(</skirt>)')
@@ -219,47 +229,73 @@ class SkirtSkein:
 		flippedLoop = euclidean.getDiagonalFlippedLoop(loopCrossDictionary.loop)
 		loopCrossDictionary.verticalDictionary = self.getHorizontalXIntersectionsTable(flippedLoop)
 
-	def createSkirtLoops(self):
+	def createSkirtAndBrimLoops(self):
 		'Create the skirt loops.'
+		'Merged'
 		points = euclidean.getPointsByHorizontalDictionary(self.edgeWidth, self.unifiedLoop.horizontalDictionary)
 		points += euclidean.getPointsByVerticalDictionary(self.edgeWidth, self.unifiedLoop.verticalDictionary)
 		loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.edgeWidth)
 		outerLoops = getOuterLoops(loops)
-		outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, -self.skirtOutset-self.edgeWidth*(self.repository.brimWidth.value+1))
-		self.outsetLoops = getOuterLoops(outsetLoops)
+
+		'Create the skirt loops for layer > 1 (no brim because brim is only one layer thick).'
+		self.upperOutsetLoops = []
+		self.upperOutsetLoops = self.getOutsetLoops(outerLoops, -self.skirtOutset)
+
+		'Create combined skirt and/or brim loops'
+		self.baseOutsetLoops = []
+		skirtMin = self.getSkirtShellOutset(0)
+		skirtMax = self.getSkirtShellOutset(self.repository.baseShells.value)
+		brimMax = self.getShellOutset(self.repository.brimWidth.value)
+		if self.repository.activateSkirt.value and not self.repository.activateBrim.value:
+			for shellIndex in xrange(self.repository.baseShells.value, 0, -1):
+				outsetLoops = self.getOutsetLoops(outerLoops, - self.getSkirtShellOutset(shellIndex-1))
+				self.baseOutsetLoops += outsetLoops
+		elif not self.repository.activateSkirt.value and self.repository.activateBrim.value:
+			for shellIndex in xrange(self.repository.brimWidth.value, 0, -1):
+				outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+				self.baseOutsetLoops += outsetLoops
+		elif self.repository.activateSkirt.value and self.repository.activateBrim.value:
+			if skirtMax <= brimMax:
+				'Skirt is fully inside brim'
+				for shellIndex in xrange(self.repository.brimWidth.value, 0, -1):
+					outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+					self.baseOutsetLoops += outsetLoops
+			elif skirtMax > brimMax:
+				'Skirt base  shells starts outside brim'
+				if skirtMin >= brimMax:
+					'Skirt base is outside of brim'
+					for shellIndex in xrange(self.repository.baseShells.value, 0, -1):
+						outsetLoops = self.getOutsetLoops(outerLoops, - self.getSkirtShellOutset(shellIndex-1))
+						self.baseOutsetLoops += outsetLoops
+					for shellIndex in xrange(self.repository.brimWidth.value, 0, -1):
+						outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+						self.baseOutsetLoops += outsetLoops
+				else:
+					'Skirt base touches brim'
+					for shellIndex in xrange(self.repository.baseShells.value + self.repository.brimWidth.value, 0, -1):
+						if self.getShellOutset(shellIndex-1) <= skirtMax:
+							outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+							self.baseOutsetLoops += outsetLoops
+					
+	def getSkirtShellOutset(self, shellIndex):
+		return self.getShellOutset(self.repository.gapOverEdgeWidth.value) + (shellIndex) * self.edgeWidth	
+	def getShellOutset(self, shellIndex):
+		return (shellIndex+0.5) * self.edgeWidth
+		
+	def getOutsetLoops(self, outerLoops, distance):
+		outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, distance)
+		outsetLoops = getOuterLoops(outsetLoops)
 		if self.repository.convex.value:
-			self.outsetLoops = [euclidean.getLoopConvex(euclidean.getConcatenatedList(self.outsetLoops))]
-
-		self.outsetBrimLoops = []
-		for self.brimLine in xrange( self.repository.brimWidth.value-1, self.brimLine, -1 ):
-			points = euclidean.getPointsByHorizontalDictionary(self.edgeWidth, self.unifiedLoop.horizontalDictionary)
-			points += euclidean.getPointsByVerticalDictionary(self.edgeWidth, self.unifiedLoop.verticalDictionary)
-			loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.edgeWidth)
-			outerLoops = getOuterLoops(loops)
-			outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, -self.edgeWidth*(self.brimLine+0.5))
-			outsetLoops = getOuterLoops(outsetLoops)
-			if self.repository.convex.value:
-				outsetLoops = [euclidean.getLoopConvex(euclidean.getConcatenatedList(outsetLoops))]
-			self.outsetBrimLoops += outsetLoops
+			outsetLoops = [euclidean.getLoopConvex(euclidean.getConcatenatedList(outsetLoops))]
+		return outsetLoops
 	
-		if self.repository.brimWidth.value > 0:	
-			points = euclidean.getPointsByHorizontalDictionary(self.edgeWidth, self.unifiedLoop.horizontalDictionary)
-			points += euclidean.getPointsByVerticalDictionary(self.edgeWidth, self.unifiedLoop.verticalDictionary)
-			loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.edgeWidth)
-			outerLoops = getOuterLoops(loops)
-			outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, -self.edgeWidth*0.5)
-			outsetLoops = getOuterLoops(outsetLoops)
-			if self.repository.convex.value:
-				outsetLoops = [euclidean.getLoopConvex(euclidean.getConcatenatedList(outsetLoops))]
-			self.outsetBrimLoops += outsetLoops
-
 	def getCraftedGcode(self, gcodeText, repository):
 		'Parse gcode text and store the skirt gcode.'
 		self.repository = repository
 		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization()
 		self.parseBoundaries()
-		self.createSkirtLoops()
+		self.createSkirtAndBrimLoops()
 		for self.lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[self.lineIndex]
 			self.parseLine(line)
@@ -316,7 +352,7 @@ class SkirtSkein:
 				self.skirtFlowRate = self.oldFlowRate
 			elif firstWord == '(<edgeWidth>':
 				self.edgeWidth = float(splitLine[1])
-				self.skirtOutset = (self.repository.gapOverEdgeWidth.value) * self.edgeWidth
+				self.skirtOutset = self.getSkirtShellOutset(0)
 				self.distanceFeedRate.addTagRoundedLine('skirtOutset', self.skirtOutset)
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])
@@ -335,10 +371,10 @@ class SkirtSkein:
 			self.feedRateMinute = gcodec.getFeedRateMinute(self.feedRateMinute, splitLine)
 		elif firstWord == '(<layer>':
 			self.layerIndex += 1
-			if self.layerIndex < self.repository.layersTo.value:
+			if self.repository.activateSkirt.value and (self.layerIndex < self.repository.layersTo.value):
 				self.addSkirt(float(splitLine[1]))
-			if (self.layerIndex < 1) and (self.repository.brimWidth.value > 0):
-				self.addBrim(float(splitLine[1]))
+			if (self.repository.activateSkirt.value or self.repository.activateBrim.value) and (self.layerIndex < 1):
+				self.addBrimAndBaseSkirt(float(splitLine[1]))
 		elif firstWord == 'M101':
 			self.isExtruderActive = True
 		elif firstWord == 'M103':
