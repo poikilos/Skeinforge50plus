@@ -231,61 +231,72 @@ class SkirtSkein:
 
 	def createSkirtAndBrimLoops(self):
 		'Create the skirt loops.'
-		'Merged'
 		points = euclidean.getPointsByHorizontalDictionary(self.edgeWidth, self.unifiedLoop.horizontalDictionary)
 		points += euclidean.getPointsByVerticalDictionary(self.edgeWidth, self.unifiedLoop.verticalDictionary)
 		loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.edgeWidth)
 		outerLoops = getOuterLoops(loops)
-
-		'Create the skirt loops for layer > 1 (no brim because brim is only one layer thick).'
-		self.upperOutsetLoops = []
-		self.upperOutsetLoops = self.getOutsetLoops(outerLoops, -self.skirtOutset)
-
 		'Create combined skirt and/or brim loops'
 		self.baseOutsetLoops = []
-		skirtMin = self.getSkirtShellOutset(0)
-		skirtMax = self.getSkirtShellOutset(self.repository.baseShells.value)
+		self.upperOutsetLoops = []
+		'self.getSkirtShellOutset(0)'
+		skirtMin = self.getShellOutset(math.floor(self.repository.gapOverEdgeWidth.value))  
+		skirtMax = self.getShellOutset(math.ceil(self.repository.gapOverEdgeWidth.value) + self.repository.baseShells.value)
 		brimMax = self.getShellOutset(self.repository.brimWidth.value)
 		if self.repository.activateSkirt.value and not self.repository.activateBrim.value:
+			self.upperOutsetLoops = self.getOutsetLoops(outerLoops, -self.getSkirtShellOutset(0), self.repository.convex.value)
 			for shellIndex in xrange(self.repository.baseShells.value, 0, -1):
-				outsetLoops = self.getOutsetLoops(outerLoops, - self.getSkirtShellOutset(shellIndex-1))
+				outsetLoops = self.getOutsetLoops(outerLoops, - self.getSkirtShellOutset(shellIndex-1), self.repository.convex.value)
 				self.baseOutsetLoops += outsetLoops
 		elif not self.repository.activateSkirt.value and self.repository.activateBrim.value:
 			for shellIndex in xrange(self.repository.brimWidth.value, 0, -1):
-				outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+				outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1), False)
 				self.baseOutsetLoops += outsetLoops
 		elif self.repository.activateSkirt.value and self.repository.activateBrim.value:
 			if skirtMax <= brimMax:
 				'Skirt is fully inside brim'
+				'With a convex skirt the threads of skirt may have a big distance to perimeter.'
+				'Even if brim is large (brim should be non convex in optimal code), the convex skirt and the outer brim may collide'
+				'Next best solution so far is to make outer brim also following convex. The critical outer corners are touched anyway.'
+				self.upperOutsetLoops = self.getOutsetLoops(outerLoops, -self.skirtOutset, self.repository.convex.value)
 				for shellIndex in xrange(self.repository.brimWidth.value, 0, -1):
-					outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+					if (self.getShellOutset(shellIndex-1) >= skirtMin):
+						outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1), self.repository.convex.value)
+					else:
+						outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1), False)
 					self.baseOutsetLoops += outsetLoops
 			elif skirtMax > brimMax:
 				'Skirt base  shells starts outside brim'
 				if skirtMin >= brimMax:
 					'Skirt base is outside of brim'
+					'For skirt base layers we can use convex because convex threads are always further away from perimeter then BrimMax.'
+					self.upperOutsetLoops = self.getOutsetLoops(outerLoops, -self.skirtOutset, self.repository.convex.value)
 					for shellIndex in xrange(self.repository.baseShells.value, 0, -1):
-						outsetLoops = self.getOutsetLoops(outerLoops, - self.getSkirtShellOutset(shellIndex-1))
+						outsetLoops = self.getOutsetLoops(outerLoops, - self.getSkirtShellOutset(shellIndex-1), self.repository.convex.value)
 						self.baseOutsetLoops += outsetLoops
 					for shellIndex in xrange(self.repository.brimWidth.value, 0, -1):
-						outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+						outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1), False)
 						self.baseOutsetLoops += outsetLoops
 				else:
 					'Skirt base touches brim'
+					self.upperOutsetLoops = self.getOutsetLoops(outerLoops, -self.skirtOutset, self.repository.convex.value)
 					for shellIndex in xrange(self.repository.baseShells.value + self.repository.brimWidth.value, 0, -1):
-						if self.getShellOutset(shellIndex-1) <= skirtMax:
-							outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1))
+						if (self.getShellOutset(shellIndex-1) < skirtMax) and (self.getShellOutset(shellIndex-1) >= skirtMin) :
+							outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1), self.repository.convex.value)
 							self.baseOutsetLoops += outsetLoops
+						elif (self.getShellOutset(shellIndex-1) < skirtMin):
+							outsetLoops = self.getOutsetLoops(outerLoops, - self.getShellOutset(shellIndex-1), False)
+							self.baseOutsetLoops += outsetLoops
+
 					
 	def getSkirtShellOutset(self, shellIndex):
 		return self.getShellOutset(self.repository.gapOverEdgeWidth.value) + (shellIndex) * self.edgeWidth	
 	def getShellOutset(self, shellIndex):
 		return (shellIndex+0.5) * self.edgeWidth
 		
-	def getOutsetLoops(self, outerLoops, distance):
+	def getOutsetLoops(self, outerLoops, distance, convex):
 		outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, distance)
 		outsetLoops = getOuterLoops(outsetLoops)
-		if self.repository.convex.value:
+		if convex:
 			outsetLoops = [euclidean.getLoopConvex(euclidean.getConcatenatedList(outsetLoops))]
 		return outsetLoops
 	
