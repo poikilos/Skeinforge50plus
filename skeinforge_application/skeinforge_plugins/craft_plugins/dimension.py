@@ -199,6 +199,7 @@ class DimensionSkein:
 		self.totalExtrusionDistance = 0.0
 		self.travelFeedRatePerSecond = None
 		self.zDistanceRatio = 5.0
+		self.isRetracted = False
 
 	def addLinearMoveExtrusionDistanceLine(self, extrusionDistance):
 		'Get the extrusion distance string from the extrusion distance.'
@@ -391,14 +392,16 @@ class DimensionSkein:
 			self.layerIndex += 1
 			settings.printProgress(self.layerIndex, 'dimension')
 		elif firstWord == 'M101':
-			if self.repository.firmwareRetraction.value:
-				self.distanceFeedRate.addLine('G11')
-			else:
-				self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
-				if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 
-					if not self.repository.relativeExtrusionDistance.value:
-						self.distanceFeedRate.addLine('G92 E0')
-						self.totalExtrusionDistance = 0.0
+			if self.isRetracted:
+				if self.repository.firmwareRetraction.value:
+					self.distanceFeedRate.addLine('G11')
+				else:
+					self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
+					if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 
+						if not self.repository.relativeExtrusionDistance.value:
+							self.distanceFeedRate.addLine('G92 E0')
+							self.totalExtrusionDistance = 0.0
+			self.isRetracted = False			
 			self.isExtruderActive = True
 		elif firstWord == 'M103':
 			if self.repository.firmwareRetraction.value:
@@ -406,6 +409,7 @@ class DimensionSkein:
 			else:
 				self.retractionRatio = self.getRetractionRatio(lineIndex)
 				self.addLinearMoveExtrusionDistanceLine(-self.repository.retractionDistance.value * self.retractionRatio)
+			self.isRetracted = True	
 			self.isExtruderActive = False
 		elif firstWord == 'M108':
 			self.flowRate = float( splitLine[1][1 :] )
