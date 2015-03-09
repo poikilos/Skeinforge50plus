@@ -40,15 +40,12 @@ from __future__ import absolute_import
 import __init__
 
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import sys
 
 
@@ -87,7 +84,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'unpause', shouldAnalyze)
 
 
-class UnpauseRepository:
+class UnpauseRepository(object):
 	"A class to handle the unpause settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -106,7 +103,7 @@ class UnpauseRepository:
 			writeOutput(fileName)
 
 
-class UnpauseSkein:
+class UnpauseSkein(object):
 	"A class to unpause a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

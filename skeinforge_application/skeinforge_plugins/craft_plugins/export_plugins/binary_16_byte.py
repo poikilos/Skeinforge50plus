@@ -93,16 +93,16 @@ Byte 14 is worth a few extra notes, this byte is used to define which of the axe
 """
 
 from __future__ import absolute_import
+#Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
+
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
-from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 from struct import Struct
 import cStringIO
-import os
 import sys
 
 
@@ -154,7 +154,7 @@ def writeOutput( fileName, gcodeText = ''):
 	print('The converted file is saved as ' + archive.getSummarizedFileName(suffixFileName) )
 
 
-class Binary16ByteRepository:
+class Binary16ByteRepository(object):
 	"A class to handle the export settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -180,7 +180,7 @@ class Binary16ByteRepository:
 			writeOutput(fileName)
 
 
-class Binary16ByteSkein:
+class Binary16ByteSkein(object):
 	"A class to convert gcode into 16 byte binary segments."
 	def __init__(self):
 		self.output = cStringIO.StringIO()

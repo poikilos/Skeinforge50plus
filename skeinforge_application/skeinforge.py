@@ -215,6 +215,7 @@ To run only fill for example, type in the craft_plugins folder which fill is in:
 """
 
 from __future__ import absolute_import
+#Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
@@ -569,7 +570,7 @@ def writeOutput(fileName):
 	settings.startMainLoopFromConstructor(repository)
 
 
-class SkeinforgeRepository:
+class SkeinforgeRepository(object):
 	'A class to handle the skeinforge settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'

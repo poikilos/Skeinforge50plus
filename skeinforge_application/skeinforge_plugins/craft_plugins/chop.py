@@ -78,11 +78,6 @@ The chop tool has created the file:
 """
 
 from __future__ import absolute_import
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -94,7 +89,6 @@ from fabmetheus_utilities import settings
 from fabmetheus_utilities import svg_writer
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import os
 import sys
 import time
@@ -143,7 +137,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 		settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
 
-class ChopRepository:
+class ChopRepository(object):
 	"A class to handle the chop settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -172,7 +166,7 @@ class ChopRepository:
 			writeOutput(fileName)
 
 
-class ChopSkein:
+class ChopSkein(object):
 	"A class to chop a carving."
 	def addExtraTopLayerIfNecessary( self, carving, layerHeight, loopLayers ):
 		"Add extra top layer if necessary."

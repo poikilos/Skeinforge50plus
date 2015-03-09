@@ -6,8 +6,6 @@ The plugin buttons which are commonly used are bolded and the ones which are rar
 """
 
 from __future__ import absolute_import
-#Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
-import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import archive
@@ -47,7 +45,7 @@ def getChainTextFromProcedures(fileName, procedures, text):
 				print(fileName)
 				return ''
 			if gcodec.isProcedureDone( text, procedure ):
-				print('%s procedure took %s.' % (procedure.capitalize(), euclidean.getDurationString(time.time() - lastProcedureTime)))
+				print('%s procedure took %s (%d).' % (procedure.capitalize(), euclidean.getDurationString(time.time() - lastProcedureTime), len(text)))
 				lastProcedureTime = time.time()
 	return text
 
@@ -156,7 +154,7 @@ def writeSVGTextWithNounMessage(fileName, repository, shouldAnalyze=True):
 		settings.openSVGPage(fileNameSuffix, repository.svgViewer.value)
 
 
-class CraftRadioButtonsSaveListener:
+class CraftRadioButtonsSaveListener(object):
 	"A class to update the craft radio buttons."
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
@@ -200,7 +198,7 @@ class CraftRadioButtonsSaveListener:
 		self.repository.pluginFrame.update()
 
 
-class CraftRepository:
+class CraftRepository(object):
 	"A class to handle the craft settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."

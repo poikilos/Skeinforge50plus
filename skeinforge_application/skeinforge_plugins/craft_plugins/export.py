@@ -107,7 +107,6 @@ from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_analyze
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
@@ -313,7 +312,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	return window
 
 
-class ExportRepository:
+class ExportRepository(object):
 	'A class to handle the export settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -363,7 +362,7 @@ class ExportRepository:
 			writeOutput(fileName)
 
 
-class ExportSkein:
+class ExportSkein(object):
 	'A class to export a skein of extrusions.'
 	def __init__(self):
 		self.crafting = False

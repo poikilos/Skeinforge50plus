@@ -32,7 +32,7 @@ def getNewMouseTool():
 	return ViewpointRotate()
 
 
-class LatitudeLongitude:
+class LatitudeLongitude(object):
 	"A latitude and longitude."
 	def __init__( self, buttonOnePressedCanvasCoordinate, newCoordinate, skeinWindow, shift ):
 		"Set the latitude and longitude."

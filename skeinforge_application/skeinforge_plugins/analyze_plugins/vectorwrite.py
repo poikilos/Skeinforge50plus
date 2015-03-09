@@ -156,7 +156,7 @@ class SVGWriterVectorwrite(svg_writer.SVGWriter):
 		self.addPaths('#f5c', threadLayer.paths, transformString) #light violetred
 
 
-class ThreadLayer:
+class ThreadLayer(object):
 	'Threads with a z.'
 	def __init__( self, z ):
 		self.boundaryLoops = []
@@ -195,7 +195,7 @@ class ThreadLayer:
 		vector3.setToXYZ(pointComplex.real, pointComplex.imag, min(self.z, vector3.z))
 
 
-class VectorwriteRepository:
+class VectorwriteRepository(object):
 	'A class to handle the vectorwrite settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -223,7 +223,7 @@ class VectorwriteRepository:
 			getWindowAnalyzeFile(fileName)
 
 
-class VectorwriteSkein:
+class VectorwriteSkein(object):
 	'A class to vectorwrite a carving.'
 	def __init__(self):
 		'Initialize.'

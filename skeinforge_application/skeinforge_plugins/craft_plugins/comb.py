@@ -30,11 +30,6 @@ The comb tool has created the file:
 """
 
 from __future__ import absolute_import
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -47,7 +42,6 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import sys
 
 
@@ -133,7 +127,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'comb', shouldAnalyze)
 
 
-class BoundarySegment:
+class BoundarySegment(object):
 	'A boundary and segment.'
 	def __init__(self, begin):
 		'Initialize'
@@ -153,7 +147,7 @@ class BoundarySegment:
 		return (self.segment[0], end)
 
 
-class CombRepository:
+class CombRepository(object):
 	"A class to handle the comb settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -171,7 +165,7 @@ class CombRepository:
 			writeOutput(fileName)
 
 
-class CombSkein:
+class CombSkein(object):
 	"A class to comb a skein of extrusions."
 	def __init__(self):
 		'Initialize'
@@ -460,7 +454,7 @@ class CombSkein:
 		self.distanceFeedRate.addLineCheckAlteration(line)
 
 
-class DistancePoint:
+class DistancePoint(object):
 	'A class to get the distance of the point along a segment inside a loop.'
 	def __init__(self, begin, loop, runningJumpSpace, segment):
 		'Initialize'

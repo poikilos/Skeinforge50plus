@@ -172,7 +172,6 @@ from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import sys
 
-
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
@@ -201,14 +200,14 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'chamber', shouldAnalyze)
 
 
-class ChamberRepository:
+class ChamberRepository(object):
 	"A class to handle the chamber settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.chamber.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Chamber', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Chamber')
-		self.activateChamber = settings.BooleanSetting().getFromValue('Activate Chamber', self, True )
+		self.activateChamber = settings.BooleanSetting().getFromValue('Activate Chamber', self, False )
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Bed -', self )
 		self.bedTemperature = settings.FloatSpin().getFromValue(20.0, 'Bed Temperature (Celcius):', self, 90.0, 60.0)
@@ -228,7 +227,7 @@ class ChamberRepository:
 
 
 
-class ChamberSkein:
+class ChamberSkein(object):
 	"A class to chamber a skein of extrusions."
 	def __init__(self):
 		'Initialize.'

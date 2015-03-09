@@ -80,14 +80,11 @@ import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import sys
 
 
@@ -119,14 +116,14 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'temperature', shouldAnalyze)
 
 
-class TemperatureRepository:
+class TemperatureRepository(object):
 	"A class to handle the temperature settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.temperature.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Temperature', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Temperature')
-		self.activateTemperature = settings.BooleanSetting().getFromValue('Activate Temperature', self, True )
+		self.activateTemperature = settings.BooleanSetting().getFromValue('Activate Temperature', self, False )
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Rate -', self )
 		self.coolingRate = settings.FloatSpin().getFromValue( 1.0, 'Cooling Rate (Celcius/second):', self, 20.0, 3.0 )
@@ -149,7 +146,7 @@ class TemperatureRepository:
 			writeOutput(fileName)
 
 
-class TemperatureSkein:
+class TemperatureSkein(object):
 	"A class to temperature a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

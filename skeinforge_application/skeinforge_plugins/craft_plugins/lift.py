@@ -44,7 +44,6 @@ from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import sys
 
-
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/02/05 $'
 __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
@@ -73,7 +72,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'lift', shouldAnalyze)
 
 
-class LiftRepository:
+class LiftRepository(object):
 	"A class to handle the lift settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -91,7 +90,7 @@ class LiftRepository:
 			writeOutput(fileName)
 
 
-class LiftSkein:
+class LiftSkein(object):
 	"A class to lift a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

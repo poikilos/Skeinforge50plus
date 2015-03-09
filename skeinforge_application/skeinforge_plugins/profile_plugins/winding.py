@@ -15,7 +15,9 @@ To change the winding profile, in a shell in the profile_plugins folder type:
 
 
 from __future__ import absolute_import
+#Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
+
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import sys
@@ -35,7 +37,7 @@ def getNewRepository():
 	return WindingRepository()
 
 
-class WindingRepository:
+class WindingRepository(object):
 	"A class to handle the winding settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."

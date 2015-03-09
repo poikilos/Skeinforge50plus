@@ -31,23 +31,17 @@ The limit tool has created the file:
 .. Screw Holder Bottom_limit.gcode
 
 """
-
+from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
-from datetime import date
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
-from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
-import os
 import sys
 
 
@@ -79,14 +73,14 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'limit', shouldAnalyze)
 
 
-class LimitRepository:
+class LimitRepository(object):
 	'A class to handle the limit settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.limit.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Limit', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Limit')
-		self.activateLimit = settings.BooleanSetting().getFromValue('Activate Limit', self, True)
+		self.activateLimit = settings.BooleanSetting().getFromValue('Activate Limit', self, False)
 		self.maximumInitialFeedRate = settings.FloatSpin().getFromValue(0.5, 'Maximum Initial Feed Rate (mm/s):', self, 10.0, 1.0)
 		self.executeTitle = 'Limit'
 
@@ -97,7 +91,7 @@ class LimitRepository:
 			writeOutput(fileName)
 
 
-class LimitSkein:
+class LimitSkein(object):
 	'A class to limit a skein of extrusions.'
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

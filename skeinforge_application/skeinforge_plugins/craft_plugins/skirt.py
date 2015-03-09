@@ -73,7 +73,6 @@ import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities.geometry.solids import triangle_mesh
-from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
@@ -123,7 +122,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'skirt', shouldAnalyze)
 
 
-class LoopCrossDictionary:
+class LoopCrossDictionary(object):
 	'Loop with a horizontal and vertical dictionary.'
 	def __init__(self):
 		'Initialize LoopCrossDictionary.'
@@ -134,7 +133,7 @@ class LoopCrossDictionary:
 		return str(self.loop)
 
 
-class SkirtRepository:
+class SkirtRepository(object):
 	'A class to handle the skirt settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -162,7 +161,7 @@ class SkirtRepository:
 			writeOutput(fileName)
 
 
-class SkirtSkein:
+class SkirtSkein(object):
 	'A class to skirt a skein of extrusions.'
 	def __init__(self):
 		'Initialize variables.'

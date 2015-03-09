@@ -8,10 +8,8 @@ from __future__ import absolute_import
 import __init__
 
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import os
 
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
@@ -32,7 +30,7 @@ def getPluginsDirectoryPath():
 	return archive.getSkeinforgePluginsPath('meta_plugins')
 
 
-class MetaRepository:
+class MetaRepository(object):
 	"A class to handle the meta settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."

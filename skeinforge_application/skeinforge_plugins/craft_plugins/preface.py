@@ -61,16 +61,12 @@ from datetime import date, datetime
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities.svg_reader import SVGReader
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities import settings
-from fabmetheus_utilities import svg_writer
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 from time import strftime
-import os
 import sys
 
 
@@ -100,7 +96,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'preface', shouldAnalyze)
 
 
-class PrefaceRepository:
+class PrefaceRepository(object):
 	"A class to handle the preface settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -124,7 +120,7 @@ class PrefaceRepository:
 			writeOutput(fileName)
 
 
-class PrefaceSkein:
+class PrefaceSkein(object):
 	"A class to preface a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

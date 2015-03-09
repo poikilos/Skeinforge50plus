@@ -7,13 +7,12 @@ from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
-
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
 
 
-class MouseToolBase:
+class MouseToolBase(object):
 	"The mouse tool base class, which does nothing."
 	def button1(self, event):
 		"The left button was clicked, <Button-1> function."

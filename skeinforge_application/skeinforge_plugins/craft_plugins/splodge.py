@@ -62,7 +62,6 @@ import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
@@ -100,7 +99,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'splodge', shouldAnalyze)
 
 
-class SplodgeRepository:
+class SplodgeRepository(object):
 	"A class to handle the splodge settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -128,7 +127,7 @@ class SplodgeRepository:
 			writeOutput(fileName)
 
 
-class SplodgeSkein:
+class SplodgeSkein(object):
 	"A class to splodge a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

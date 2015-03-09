@@ -73,11 +73,6 @@ The cleave tool has created the file:
 """
 
 from __future__ import absolute_import
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -89,7 +84,6 @@ from fabmetheus_utilities import settings
 from fabmetheus_utilities import svg_writer
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import os
 import sys
 import time
@@ -138,7 +132,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 		settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
 
-class CleaveRepository:
+class CleaveRepository(object):
 	"A class to handle the cleave settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -166,7 +160,7 @@ class CleaveRepository:
 			writeOutput(fileName)
 
 
-class CleaveSkein:
+class CleaveSkein(object):
 	"A class to cleave a carving."
 	def getCarvedSVG( self, carving, fileName, repository ):
 		"Parse gnu triangulated surface text and store the cleaved gcode."

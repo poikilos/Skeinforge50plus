@@ -29,11 +29,6 @@ The widen tool has created the file:
 """
 
 from __future__ import absolute_import
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -48,7 +43,6 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import os
 import sys
 
 
@@ -111,7 +105,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'widen', shouldAnalyze)
 
 
-class WidenRepository:
+class WidenRepository(object):
 	'A class to handle the widen settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -132,7 +126,7 @@ class WidenRepository:
 			writeOutput(fileName)
 
 
-class WidenSkein:
+class WidenSkein(object):
 	'A class to widen a skein of extrusions.'
 	def __init__(self):
 		self.boundary = None

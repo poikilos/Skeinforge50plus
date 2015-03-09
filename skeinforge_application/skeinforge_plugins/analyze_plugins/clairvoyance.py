@@ -88,7 +88,7 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 		getWindowAnalyzeFile(fileNamePenultimate, repository)
 
 
-class ClairvoyanceRepository:
+class ClairvoyanceRepository(object):
 	'A class to handle the clairvoyance settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'

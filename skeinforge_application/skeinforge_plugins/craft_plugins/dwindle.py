@@ -49,9 +49,7 @@ from __future__ import absolute_import
 import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
-from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
@@ -59,7 +57,6 @@ from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import math
 import sys
-
 
 __author__ = 'Enrique Perez (perez_enrique aht yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
@@ -89,7 +86,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'dwindle', shouldAnalyze)
 
 
-class DwindleRepository:
+class DwindleRepository(object):
 	'A class to handle the dwindle settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -111,7 +108,7 @@ class DwindleRepository:
 			writeOutput(fileName)
 
 
-class DwindleSkein:
+class DwindleSkein(object):
 	'A class to dwindle a skein of extrusions.'
 	def __init__(self):
 		'Initialize.'
@@ -212,7 +209,7 @@ class DwindleSkein:
 			self.distanceFeedRate.addLine(line)
 
 
-class ThreadSection:
+class ThreadSection(object):
 	'A class to handle a volumetric section of a thread.'
 	def __init__(self, feedRateMinute, flowRate, location, oldLocation):
 		'Initialize.'

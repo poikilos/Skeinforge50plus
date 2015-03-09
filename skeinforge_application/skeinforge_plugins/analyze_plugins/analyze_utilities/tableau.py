@@ -65,7 +65,7 @@ def setStateNormalDisabled( active, widget ):
 		widget.config( state = settings.Tkinter.DISABLED )
 
 
-class ColoredLine:
+class ColoredLine(object):
 	'A colored index line.'
 	def __init__( self, begin, colorName, displayString, end, tagString ):
 		'Set the color name and corners.'
@@ -80,7 +80,7 @@ class ColoredLine:
 		return '%s, %s, %s, %s' % ( self.colorName, self.begin, self.end, self.tagString )
 
 
-class ExportCanvasDialog:
+class ExportCanvasDialog(object):
 	'A class to display the export canvas repository dialog.'
 	def addPluginToMenu( self, canvas, fileName, menu, name, suffix ):
 		'Add the display command to the menu.'
@@ -105,7 +105,7 @@ class ExportCanvasDialog:
 		settings.getDisplayedDialogFromConstructor(pluginRepository)
 
 
-class TableauRepository:
+class TableauRepository(object):
 	'The viewer base repository class.'
 	def addAnimation(self):
 		'Add the animation settings.'
@@ -134,7 +134,7 @@ class TableauRepository:
 		settings.writeSettings(self)
 
 
-class TableauWindow:
+class TableauWindow(object):
 	def activateMouseModeTool(self):
 		'Activate the mouse mode tool.'
 		self.repository.setToDisplaySave()

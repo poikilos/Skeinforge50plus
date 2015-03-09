@@ -149,7 +149,7 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 	getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 
-class AbridgedSetting:
+class AbridgedSetting(object):
 	'A class to handle an abridged setting.'
 	def __init__(self, splitLine):
 		'Initialize.'
@@ -162,7 +162,7 @@ class AbridgedSetting:
 		return '%s\t%s\t%s' % (self.procedure, self.name, self.value)
 
 
-class FileNamePath:
+class FileNamePath(object):
 	'A class to handle a file name and path.'
 	def __init__(self, directoryName, fileName):
 		'Initialize.'
@@ -174,7 +174,7 @@ class FileNamePath:
 		return '%s\t%s' % (self.fileName, self.path)
 
 
-class SynopsisRepository:
+class SynopsisRepository(object):
 	'A class to handle the synopsis settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'

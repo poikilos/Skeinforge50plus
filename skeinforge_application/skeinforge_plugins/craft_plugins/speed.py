@@ -123,13 +123,11 @@ import __init__
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import sys
 
 
@@ -161,7 +159,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'speed', shouldAnalyze)
 
 
-class SpeedRepository:
+class SpeedRepository(object):
 	"A class to handle the speed settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -214,7 +212,7 @@ class SpeedRepository:
 			writeOutput(fileName)
 
 
-class SpeedSkein:
+class SpeedSkein(object):
 	"A class to speed a skein of extrusions."
 	def __init__(self):
 		'Initialize.'

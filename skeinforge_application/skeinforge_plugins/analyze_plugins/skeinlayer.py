@@ -229,7 +229,7 @@ class SkeinlayerRepository( tableau.TableauRepository ):
 			getWindowAnalyzeFile(fileName)
 
 
-class SkeinlayerSkein:
+class SkeinlayerSkein(object):
 	"A class to write a get a scalable vector graphics text for a gcode skein."
 	def __init__(self):
 		'Initialize.'

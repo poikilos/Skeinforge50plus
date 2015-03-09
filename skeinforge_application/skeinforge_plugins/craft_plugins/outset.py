@@ -21,11 +21,6 @@ The outset tool has created the file:
 """
 
 from __future__ import absolute_import
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -70,7 +65,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'outset', shouldAnalyze)
 
 
-class OutsetRepository:
+class OutsetRepository(object):
 	'A class to handle the outset settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -86,7 +81,7 @@ class OutsetRepository:
 			writeOutput(fileName)
 
 
-class OutsetSkein:
+class OutsetSkein(object):
 	'A class to outset a skein of extrusions.'
 	def __init__(self):
 		self.boundary = None

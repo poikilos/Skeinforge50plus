@@ -71,11 +71,9 @@ from __future__ import absolute_import
 import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
-from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
@@ -112,7 +110,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'stretch', shouldAnalyze)
 
 
-class LineIteratorBackward:
+class LineIteratorBackward(object):
 	"Backward line iterator class."
 	def __init__( self, isLoop, lineIndex, lines ):
 		self.firstLineIndex = None
@@ -176,7 +174,7 @@ class LineIteratorBackward:
 		return False
 
 
-class LineIteratorForward:
+class LineIteratorForward(object):
 	"Forward line iterator class."
 	def __init__( self, isLoop, lineIndex, lines ):
 		self.firstLineIndex = None
@@ -217,7 +215,7 @@ class LineIteratorForward:
 		raise StopIteration, "You've reached the end of the line."
 
 
-class StretchRepository:
+class StretchRepository(object):
 	"A class to handle the stretch settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -243,7 +241,7 @@ class StretchRepository:
 			writeOutput(fileName)
 
 
-class StretchSkein:
+class StretchSkein(object):
 	"A class to stretch a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

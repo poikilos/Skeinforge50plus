@@ -8,11 +8,9 @@ from __future__ import absolute_import
 import __init__
 
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import os
 import sys
 import traceback
 
@@ -55,7 +53,7 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 	return window
 
 
-class AnalyzeRepository:
+class AnalyzeRepository(object):
 	"A class to handle the analyze settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."

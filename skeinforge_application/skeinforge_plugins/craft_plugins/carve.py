@@ -91,11 +91,6 @@ The carve tool has created the file:
 """
 
 from __future__ import absolute_import
-try:
-	import psyco
-	psyco.full()
-except:
-	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -108,10 +103,8 @@ from fabmetheus_utilities import svg_writer
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import math
-import os
 import sys
 import time
-
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/02/05 $'
@@ -153,7 +146,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 		settings.openSVGPage(suffixFileName, repository.svgViewer.value)
 
 
-class CarveRepository:
+class CarveRepository(object):
 	"A class to handle the carve settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -185,7 +178,7 @@ class CarveRepository:
 			writeOutput(fileName)
 
 
-class CarveSkein:
+class CarveSkein(object):
 	"A class to carve a carving."
 	def getCarvedSVG(self, carving, fileName, repository):
 		"Parse gnu triangulated surface text and store the carved gcode."

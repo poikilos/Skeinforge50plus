@@ -99,11 +99,10 @@ The dimension tool has created the file:
 .. Screw Holder Bottom_dimension.gcode
 
 """
-
+from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
-from datetime import date
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities.geometry.solids import triangle_mesh
 from fabmetheus_utilities import archive
@@ -115,7 +114,6 @@ from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import math
-import os
 import sys
 
 
@@ -147,7 +145,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'dimension', shouldAnalyze)
 
 
-class DimensionRepository:
+class DimensionRepository(object):
 	'A class to handle the dimension settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -181,7 +179,7 @@ class DimensionRepository:
 			writeOutput(fileName)
 
 
-class DimensionSkein:
+class DimensionSkein(object):
 	'A class to dimension a skein of extrusions.'
 	def __init__(self):
 		'Initialize.'

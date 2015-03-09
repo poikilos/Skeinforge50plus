@@ -71,7 +71,7 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText )
 
 
-class CommentRepository:
+class CommentRepository(object):
 	"A class to handle the comment settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -88,7 +88,7 @@ class CommentRepository:
 			getWindowAnalyzeFile(fileName)
 
 
-class CommentSkein:
+class CommentSkein(object):
 	"A class to comment a gcode skein."
 	def __init__(self):
 		self.oldLocation = None

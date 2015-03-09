@@ -53,7 +53,6 @@ from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import sys
 
 
@@ -85,7 +84,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'clip', shouldAnalyze)
 
 
-class ClipRepository:
+class ClipRepository(object):
 	"A class to handle the clip settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -104,7 +103,7 @@ class ClipRepository:
 			writeOutput(fileName)
 
 
-class ClipSkein:
+class ClipSkein(object):
 	"A class to clip a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

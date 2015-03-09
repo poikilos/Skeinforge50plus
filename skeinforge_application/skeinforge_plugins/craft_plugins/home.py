@@ -42,8 +42,6 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
-import os
 import sys
 
 
@@ -75,17 +73,17 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'home', shouldAnalyze)
 
 
-class HomeRepository:
+class HomeRepository(object):
 	"A class to handle the home settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.home.html', self)
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Home', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Home')
-		self.activateHome = settings.BooleanSetting().getFromValue('Activate Home', self, True )
+		self.activateHome = settings.BooleanSetting().getFromValue('Activate Home', self, False )
 		self.nameOfHomeFile = settings.StringSetting().getFromValue('Name of Home File:', self, 'home.gcode')
 		self.executeTitle = 'Home'
-
+ 
 	def execute(self):
 		"Home button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode(self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled)
@@ -93,7 +91,7 @@ class HomeRepository:
 			writeOutput(fileName)
 
 
-class HomeSkein:
+class HomeSkein(object):
 	"A class to home a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

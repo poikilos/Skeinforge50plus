@@ -11,6 +11,9 @@ Many of the functions in this script are copied from gcodec in skeinforge_utilit
 """
 
 from __future__ import absolute_import
+#Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
+import __init__
+
 import cStringIO
 import os
 
@@ -62,12 +65,14 @@ def getTextLines(text):
 	return text.replace('\r', '\n').split('\n')
 
 
-class GcodeSmallSkein:
+class GcodeSmallSkein(object):
 	"A class to remove redundant z and feed rate parameters from a skein of extrusions."
 	def __init__(self):
 		self.lastFeedRateString = None
 		self.lastZString = None
 		self.output = cStringIO.StringIO()
+		self.layerNr = 0
+		self.parsingAlteration = False
 
 	def getCraftedGcode( self, gcodeText ):
 		"Parse gcode text and store the gcode."
@@ -78,6 +83,11 @@ class GcodeSmallSkein:
 
 	def parseLine(self, line):
 		"Parse a gcode line."
+		if len(line) < 1:
+			return
+		if line[0] == '(':
+			self.parseComment(line)
+			return
 		splitLine = getSplitLineBeforeBracketSemicolon(line)
 		if len(splitLine) < 1:
 			return
@@ -85,6 +95,8 @@ class GcodeSmallSkein:
 		if len(firstWord) < 1:
 			return
 		if firstWord[0] == '(':
+			return
+		if firstWord == 'M108' or firstWord == 'M113':
 			return
 		if firstWord != 'G1':
 			self.output.write(line + '\n')
@@ -108,3 +120,24 @@ class GcodeSmallSkein:
 		self.lastFeedRateString = feedRateString
 		self.lastZString = zString
 		self.output.write('\n')
+	
+	def parseComment(self, line):
+		if line.startswith('(<skirt>'):
+			self.output.write(';TYPE:SKIRT\n');
+		elif line.startswith('(<edge>'):
+			self.output.write(';TYPE:WALL-OUTER\n');
+		elif line.startswith('(<loop>'):
+			self.output.write(';TYPE:WALL-INNER\n');
+		elif line.startswith('(<infill>'):
+			self.output.write(';TYPE:FILL\n');
+		elif line.startswith('(<alteration>'):
+			self.output.write(';TYPE:CUSTOM\n');
+			self.parsingAlteration = True
+		elif line.startswith('(</alteration>)'):
+			self.parsingAlteration = False
+		elif line.startswith('(<supportLayer>'):
+			self.output.write(';TYPE:SUPPORT\n');
+		elif line.startswith('(<layer>'):
+			self.output.write(';LAYER:%d\n' % (self.layerNr));
+			self.layerNr += 1
+

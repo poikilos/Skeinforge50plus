@@ -102,7 +102,6 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import os
 import sys
 
 
@@ -134,7 +133,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'cool', shouldAnalyze)
 
 
-class CoolRepository:
+class CoolRepository(object):
 	'A class to handle the cool settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -177,7 +176,7 @@ class CoolRepository:
 			writeOutput(fileName)
 
 
-class CoolSkein:
+class CoolSkein(object):
 	'A class to cool a skein of extrusions.'
 	def __init__(self):
 		self.boundaryLayer = None

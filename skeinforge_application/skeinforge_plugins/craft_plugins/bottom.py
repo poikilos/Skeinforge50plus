@@ -44,7 +44,6 @@ from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
-from datetime import date
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities.svg_reader import SVGReader
 from fabmetheus_utilities.vector3 import Vector3
@@ -53,15 +52,10 @@ from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from fabmetheus_utilities import svg_writer
-from fabmetheus_utilities import xml_simple_writer
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import cStringIO
-import os
 import sys
-import time
-
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/02/05 $'
@@ -91,7 +85,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeSVGTextWithNounMessage(fileName, BottomRepository(), shouldAnalyze)
 
 
-class BottomRepository:
+class BottomRepository(object):
 	"A class to handle the bottom settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -114,7 +108,7 @@ class BottomRepository:
 			writeOutput(fileName)
 
 
-class BottomSkein:
+class BottomSkein(object):
 	"A class to bottom a skein of extrusions."
 	def getCraftedGcode(self, fileName, repository, svgText):
 		"Parse svgText and store the bottom svgText."

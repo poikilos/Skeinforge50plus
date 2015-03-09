@@ -41,7 +41,6 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import os
 import sys
 
 
@@ -73,7 +72,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'coil', shouldAnalyze)
 
 
-class CoilRepository:
+class CoilRepository(object):
 	"A class to handle the coil settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -91,7 +90,7 @@ class CoilRepository:
 
 
 
-class CoilSkein:
+class CoilSkein(object):
 	"A class to coil a skein of extrusions."
 	def __init__(self):
 		self.boundaryLayers = []

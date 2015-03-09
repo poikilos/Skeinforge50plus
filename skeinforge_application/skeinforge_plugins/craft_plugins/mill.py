@@ -68,8 +68,6 @@ from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
-import os
 import sys
 
 
@@ -119,7 +117,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'mill', shouldAnalyze)
 
 
-class Average:
+class Average(object):
 	'A class to hold values and get the average.'
 	def __init__(self):
 		self.reset()
@@ -142,7 +140,7 @@ class Average:
 		self.total = 0.0
 
 
-class MillRepository:
+class MillRepository(object):
 	'A class to handle the mill settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -167,7 +165,7 @@ class MillRepository:
 
 
 
-class MillSkein:
+class MillSkein(object):
 	'A class to mill a skein of extrusions.'
 	def __init__(self):
 		self.aroundPixelTable = {}

@@ -52,7 +52,6 @@ from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import sys
 
-
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
@@ -81,7 +80,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'lash', shouldAnalyze)
 
 
-class LashRepository:
+class LashRepository(object):
 	"A class to handle the lash settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -100,7 +99,7 @@ class LashRepository:
 			writeOutput(fileName)
 
 
-class LashSkein:
+class LashSkein(object):
 	"A class to lash a skein of extrusions."
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()

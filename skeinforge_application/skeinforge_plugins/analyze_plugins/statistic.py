@@ -146,7 +146,7 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 
-class StatisticRepository:
+class StatisticRepository(object):
 	"A class to handle the statistics settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -171,7 +171,7 @@ class StatisticRepository:
 			getWindowAnalyzeFile(fileName)
 
 
-class StatisticSkein:
+class StatisticSkein(object):
 	"A class to get statistics for a gcode skein."
 	def __init__(self):
 		self.extrusionDiameter = None

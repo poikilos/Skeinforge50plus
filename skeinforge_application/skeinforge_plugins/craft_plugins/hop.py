@@ -48,7 +48,6 @@ import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities import archive
-from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
@@ -86,7 +85,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'hop', shouldAnalyze)
 
 
-class HopRepository:
+class HopRepository(object):
 	"A class to handle the hop settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
@@ -105,7 +104,7 @@ class HopRepository:
 			writeOutput(fileName)
 
 
-class HopSkein:
+class HopSkein(object):
 	"A class to hop a skein of extrusions."
 	def __init__(self):
 		'Initialize'

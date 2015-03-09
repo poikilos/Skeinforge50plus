@@ -358,7 +358,7 @@ class SkeinisoRepository( tableau.TableauRepository ):
 			getWindowAnalyzeFile(fileName)
 
 
-class SkeinisoSkein:
+class SkeinisoSkein(object):
 	"A class to write a get a scalable vector graphics text for a gcode skein."
 	def __init__(self):
 		self.coloredThread = []
@@ -611,7 +611,7 @@ class SkeinisoSkein:
 		self.coloredThread = []
 
 
-class SkeinPane:
+class SkeinPane(object):
 	"A class to hold the colored lines for a layer."
 	def __init__( self, sequenceIndex ):
 		"Create empty line lists."
@@ -629,7 +629,7 @@ class SkeinPane:
 		self.travelLines = []
 
 
-class Ruling:
+class Ruling(object):
 	def __init__( self, modelDistance, roundedRulingText ):
 		"Initialize the ruling."
 		self.modelDistance = modelDistance

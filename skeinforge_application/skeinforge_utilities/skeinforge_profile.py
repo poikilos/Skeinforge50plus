@@ -112,7 +112,7 @@ def updateProfileSaveListeners():
 	cancelAll()
 
 
-class AddProfile:
+class AddProfile(object):
 	"A class to add a profile."
 	def addSelection(self):
 		"Add the selection of a listbox setting."
@@ -166,7 +166,7 @@ class DeleteProfile( AddProfile ):
 		DeleteProfileDialog( self.profileListboxSetting, settings.Tkinter.Tk() )
 
 
-class DeleteProfileDialog:
+class DeleteProfileDialog(object):
 	"A dialog to delete a profile."
 	def __init__(self, profileListboxSetting, root):
 		"Display a delete dialog."
@@ -215,7 +215,7 @@ class DeleteProfileDialog:
 		self.root.destroy()
 
 
-class ProfileList:
+class ProfileList(object):
 	"A class to list the profiles."
 	def getFromName( self, name, repository ):
 		"Initialize."
@@ -307,7 +307,7 @@ class ProfileListboxSetting( settings.StringSetting ):
 				self.value = self.listSetting.value[0]
 
 
-class ProfilePluginRadioButtonsSaveListener:
+class ProfilePluginRadioButtonsSaveListener(object):
 	"A class to update the profile radio buttons."
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
@@ -331,7 +331,7 @@ class ProfilePluginRadioButtonsSaveListener:
 				return
 
 
-class ProfileRepository:
+class ProfileRepository(object):
 	"A class to handle the profile entities."
 	def __init__(self):
 		"Set the default entities, execute title & repository fileName."
@@ -351,7 +351,7 @@ class ProfileRepository:
 		updateProfileSaveListeners()
 
 
-class ProfileSelectionMenuRadio:
+class ProfileSelectionMenuRadio(object):
 	"A class to display a profile selection menu radio button."
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."

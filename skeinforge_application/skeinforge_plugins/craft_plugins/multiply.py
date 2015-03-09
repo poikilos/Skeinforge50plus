@@ -67,12 +67,10 @@ from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from fabmetheus_utilities import intercircle
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_craft
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
-import math
 import sys
 
 
@@ -104,7 +102,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	skeinforge_craft.writeChainTextWithNounMessage(fileName, 'multiply', shouldAnalyze)
 
 
-class MultiplyRepository:
+class MultiplyRepository(object):
 	'A class to handle the multiply settings.'
 	def __init__(self):
 		'Set the default settings, execute title & settings fileName.'
@@ -112,11 +110,11 @@ class MultiplyRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName(
 			fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Multiply', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Multiply')
-		self.activateMultiply = settings.BooleanSetting().getFromValue('Activate Multiply', self, False)
+		self.activateMultiply = settings.BooleanSetting().getFromValue('Activate Multiply', self, True)
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Center -', self )
-		self.centerX = settings.FloatSpin().getFromValue(-100.0, 'Center X (mm):', self, 100.0, 0.0)
-		self.centerY = settings.FloatSpin().getFromValue(-100.0, 'Center Y (mm):', self, 100.0, 0.0)
+		self.centerX = settings.FloatSpin().getFromValue(-100.0, 'Center X (mm):', self, 100.0, 105.0)
+		self.centerY = settings.FloatSpin().getFromValue(-100.0, 'Center Y (mm):', self, 100.0, 105.0)
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Number of Cells -', self)
 		self.numberOfColumns = settings.IntSpin().getFromValue(1, 'Number of Columns (integer):', self, 10, 1)
@@ -134,7 +132,7 @@ class MultiplyRepository:
 			writeOutput(fileName)
 
 
-class MultiplySkein:
+class MultiplySkein(object):
 	'A class to multiply a skein of extrusions.'
 	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
