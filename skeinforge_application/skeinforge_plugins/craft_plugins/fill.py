@@ -577,7 +577,7 @@ def insertGridPointPairWithLinePath( gridPoint, gridPointInsetX, gridPoints, isJ
 
 def isAddedPointOnPathFree( path, pixelTable, point, pointIndex, width ):
 	'Determine if the point added to a path is intersecting the pixel table or the path.'
-	if pointIndex > 0 and pointIndex < len(path):
+	if 0 < pointIndex < len(path):
 		if isSharpCorner( ( path[pointIndex - 1] ), point, ( path[pointIndex] ) ):
 			return False
 	pointIndexMinusOne = pointIndex - 1
@@ -783,18 +783,19 @@ class FillRepository(object):
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Fill', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Fill')
 		self.activateFill = settings.BooleanSetting().getFromValue('Activate Fill', self, True)
-                
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Diaphragm -', self )
 		self.diaphragmPeriod = settings.IntSpin().getFromValue( 20, 'Diaphragm Period (layers):', self, 200, 100 )
 		self.diaphragmThickness = settings.IntSpin().getFromValue( 0, 'Diaphragm Thickness (layers):', self, 5, 0 )
-                
+		self.solidSurfaceTop = settings.BooleanSetting().getFromValue('Solid Surface Top', self, True)
+		
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Extra Shells -', self )
 		self.extraShellsAlternatingSolidLayer = settings.IntSpin().getFromValue( 0, 'Extra Shells on Alternating Solid Layer (layers):', self, 3, 2 )
 		self.extraShellsBase = settings.IntSpin().getFromValue( 0, 'Extra Shells on Base (layers):', self, 3, 1 )
 		self.extraShellsSparseLayer = settings.IntSpin().getFromValue( 0, 'Extra Shells on Sparse Layer (layers):', self, 3, 1 )
-                
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Grid -', self )
 		self.gridCircleSeparationOverEdgeWidth = settings.FloatSpin().getFromValue(0.0, 'Grid Circle Separation over Perimeter Width (ratio):', self, 1.0, 0.2)
@@ -802,7 +803,7 @@ class FillRepository(object):
 		self.gridJunctionSeparationBandHeight = settings.IntSpin().getFromValue( 0, 'Grid Junction Separation Band Height (layers):', self, 20, 10 )
 		self.gridJunctionSeparationOverOctogonRadiusAtEnd = settings.FloatSpin().getFromValue( 0.0, 'Grid Junction Separation over Octogon Radius At End (ratio):', self, 0.8, 0.0 )
 		self.gridJunctionSeparationOverOctogonRadiusAtMiddle = settings.FloatSpin().getFromValue( 0.0, 'Grid Junction Separation over Octogon Radius At Middle (ratio):', self, 0.8, 0.0 )
-                
+
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Infill -', self )
 		self.infillBeginRotation = settings.FloatSpin().getFromValue( 0.0, 'Infill Begin Rotation (degrees):', self, 90.0, 45.0 )
@@ -816,22 +817,22 @@ class FillRepository(object):
 		self.infillPatternLine = settings.Radio().getFromRadio( infillLatentStringVar, 'Line', self, True )
 		self.infillPerimeterOverlap = settings.FloatSpin().getFromValue( 0.0, 'Infill Perimeter Overlap (ratio):', self, 0.4, 0.15 )
 		self.infillSolidity = settings.FloatSpin().getFromValue( 0.04, 'Infill Solidity (ratio):', self, 0.3, 0.2 )
-                
+
 		settings.LabelSeparator().getFromRepository(self)
 		self.sharpestAngle = settings.FloatSpin().getFromValue(50.0, 'Sharpest Angle (degrees):', self, 70.0, 60.0)
 		self.solidSurfaceThickness = settings.IntSpin().getFromValue(0, 'Solid Surface Thickness (layers):', self, 5, 3)
-		
+
 		self.automaticSurfaceThickness = settings.BooleanSetting().getFromValue( 'Enable automatic solid surface thickness', self, False)
 		self.desiredSurfaceThickness = settings.FloatSpin().getFromValue(0.0, 'Desired solid surface thickness (mm):', self, 30.0, 0.75)
 		self.finalLayer = settings.MenuButtonDisplay().getFromName('Force even/odd top layer:', self)
 		self.finalLayerOff = settings.MenuRadio().getFromMenuButtonDisplay(self.finalLayer, 'Off', self, True)
 		self.finalLayerOdd = settings.MenuRadio().getFromMenuButtonDisplay(self.finalLayer, 'Force odd top layer', self, False)
 		self.finalLayerEven = settings.MenuRadio().getFromMenuButtonDisplay(self.finalLayer, 'Force even top layer', self, False)
-		
+
 		self.cupVase = settings.MenuButtonDisplay().getFromName('Disable top layers(for cups and vases):', self)
 		self.cupVaseOff = settings.MenuRadio().getFromMenuButtonDisplay(self.cupVase, 'Off', self, True)
 		self.cupVaseTop = settings.MenuRadio().getFromMenuButtonDisplay(self.cupVase, 'Disable top layers', self, False)
-		
+
 		settings.LabelSeparator().getFromRepository(self)
 		self.layerLimit = settings.MenuButtonDisplay().getFromName('Object printing percentage/layer limit:', self)
 		self.layerLimitOff = settings.MenuRadio().getFromMenuButtonDisplay(self.layerLimit, 'Print entire object', self, True)
@@ -841,7 +842,7 @@ class FillRepository(object):
 		self.layerPercentage = settings.FloatSpin().getFromValue(0.0, 'Percentage of object to print:', self, 100.0, 1.0)
 		self.layerLayers = settings.FloatSpin().getFromValue(0.0, 'Number of layers to print:', self, 5000.0, 2.0)
 		settings.LabelSeparator().getFromRepository(self)
-                
+
 		self.startFromChoice = settings.MenuButtonDisplay().getFromName('Start From Choice:', self)
 		self.startFromLowerLeft = settings.MenuRadio().getFromMenuButtonDisplay(self.startFromChoice, 'Lower Left', self, True)
 		self.startFromNearest = settings.MenuRadio().getFromMenuButtonDisplay(self.startFromChoice, 'Nearest', self, False)
@@ -850,9 +851,18 @@ class FillRepository(object):
 		self.threadSequenceInfillLoops = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Infill > Loops > Perimeter', self, False)
 		self.threadSequenceInfillPerimeter = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Infill > Perimeter > Loops', self, False)
 		self.threadSequenceLoopsInfill = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Loops > Infill > Perimeter', self, False)
-		self.threadSequenceLoopsPerimeter = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Loops > Perimeter > Infill', self, True)
+		self.threadSequenceLoopsPerimeter = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Loops > Perimeter > Infill  (default)', self, True)
 		self.threadSequencePerimeterInfill = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Perimeter > Infill > Loops', self, False)
 		self.threadSequencePerimeterLoops = settings.MenuRadio().getFromMenuButtonDisplay(self.threadSequenceChoice, 'Perimeter > Loops > Infill', self, False)
+
+		self.overrideFirstLayerSequenceChoice = settings.MenuButtonDisplay().getFromName('First Layer Thread Sequence:', self)
+		self.overrideFirstLayerSequenceInfillLoops = settings.MenuRadio().getFromMenuButtonDisplay(self.overrideFirstLayerSequenceChoice, 'Infill > Loops > Perimeter', self, False)
+		self.overrideFirstLayerSequenceInfillPerimeter = settings.MenuRadio().getFromMenuButtonDisplay(self.overrideFirstLayerSequenceChoice, 'Infill > Perimeter > Loops', self, False)
+		self.overrideFirstLayerSequenceLoopsInfill = settings.MenuRadio().getFromMenuButtonDisplay(self.overrideFirstLayerSequenceChoice, 'Loops > Infill > Perimeter', self, False)
+		self.overrideFirstLayerSequenceLoopsPerimeter = settings.MenuRadio().getFromMenuButtonDisplay(self.overrideFirstLayerSequenceChoice, 'Loops > Perimeter > Infill', self, False)
+		self.overrideFirstLayerSequencePerimeterInfill = settings.MenuRadio().getFromMenuButtonDisplay(self.overrideFirstLayerSequenceChoice, 'Perimeter > Infill > Loops', self, False)
+		self.overrideFirstLayerSequencePerimeterLoops = settings.MenuRadio().getFromMenuButtonDisplay(self.overrideFirstLayerSequenceChoice, 'Perimeter > Loops > Infill  (default)', self, True)
+
 		self.executeTitle = 'Fill'
 
 	def execute(self):
@@ -897,15 +907,18 @@ class FillSkein(object):
 		pixelTable = {}
 		reverseRotation = complex(layerRotation.real, - layerRotation.imag)
 		rotatedLayer = self.rotatedLayers[layerIndex]
-			
 		self.isDoubleJunction = True
 		self.isJunctionWide = True
 		surroundingCarves = []
 		self.distanceFeedRate.addLine('(<layer> %s )' % rotatedLayer.z)
 		if layerRemainder >= int(round(self.repository.diaphragmThickness.value)):
 			for surroundingIndex in xrange(1, self.solidSurfaceThickness + 1):
-				self.addRotatedCarve(layerIndex, -surroundingIndex, reverseRotation, surroundingCarves)
-				self.addRotatedCarve(layerIndex, surroundingIndex, reverseRotation, surroundingCarves)
+				if self.repository.solidSurfaceTop.value:
+					self.addRotatedCarve(layerIndex, -surroundingIndex, reverseRotation, surroundingCarves)
+					self.addRotatedCarve(layerIndex, surroundingIndex, reverseRotation, surroundingCarves)
+				else:
+					self.addRotatedCarve(layerIndex, -surroundingIndex, reverseRotation, surroundingCarves)
+					self.addRotatedCarve(layerIndex, -surroundingIndex, reverseRotation, surroundingCarves)
 		if len(surroundingCarves) < self.doubleSolidSurfaceThickness:
 			extraShells = self.repository.extraShellsAlternatingSolidLayer.value
 			if self.lastExtraShells != self.repository.extraShellsBase.value:
@@ -1129,7 +1142,18 @@ class FillSkein(object):
 		extrusionHalfWidth = 0.5 * self.infillWidth
 		threadSequence = self.threadSequence
 		if layerIndex < 1:
-			threadSequence = ['edge', 'loops', 'infill']
+			if self.repository.overrideFirstLayerSequenceInfillLoops.value:
+				threadSequence = ['infill', 'loops', 'edge']
+			if self.repository.overrideFirstLayerSequenceInfillPerimeter.value:
+				threadSequence = ['infill', 'edge', 'loops']
+			if self.repository.overrideFirstLayerSequenceLoopsInfill.value:
+				threadSequence = ['loops', 'infill', 'edge']
+			if self.repository.overrideFirstLayerSequenceLoopsPerimeter.value:
+				threadSequence = ['loops', 'edge', 'infill']
+			if self.repository.overrideFirstLayerSequencePerimeterInfill.value:
+				threadSequence = ['edge', 'infill', 'loops']
+			if self.repository.overrideFirstLayerSequencePerimeterLoops.value:
+				threadSequence = ['edge', 'loops', 'infill']
 		euclidean.addToThreadsRemove(extrusionHalfWidth, nestedRings, self.oldOrderedLocation, self, threadSequence)
 		if testLoops != None:
 			for testLoop in testLoops:
@@ -1328,7 +1352,7 @@ class FillSkein(object):
 			if isSegmentCompletelyInAnIntersection(lineSegment, surroundingXIntersections ):
 				xFirst = lineSegment[0].point.real
 				xSecond = lineSegment[1].point.real
-				if gridPoint.real > min(xFirst, xSecond) and gridPoint.real < max(xFirst, xSecond):
+				if min(xFirst, xSecond) < gridPoint.real < max(xFirst, xSecond):
 					return True
 		return False
 
@@ -1363,7 +1387,7 @@ class FillSkein(object):
 			elif firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('fill')
 			self.distanceFeedRate.addLine(line)
- 
+
 	def parseLine( self, lineIndex ):
 		'Parse a gcode line and add it to the fill skein.'
 		line = self.lines[lineIndex]
@@ -1403,7 +1427,7 @@ class FillSkein(object):
 		self.gridInset = 1.2 * self.infillWidth
 		self.gridRadius = self.infillWidth / self.infillSolidity
 		self.gridXStepSize = 2.0 * self.gridRadius
- 		self.offsetMultiplier = self.gridRadius
+		self.offsetMultiplier = self.gridRadius
 		if self.repository.infillPatternGridHexagonal.value:
 			self.gridXStepSize = 4.0 / 3.0 * self.gridRadius
 			self.offsetMultiplier = 1.5 * self.gridXStepSize

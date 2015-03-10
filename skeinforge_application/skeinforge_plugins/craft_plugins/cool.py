@@ -142,14 +142,19 @@ class CoolRepository(object):
 			fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Cool', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute(
 			'http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Cool')
+		
+		settings.LabelSeparator().getFromRepository(self)
 		self.activateCool = settings.BooleanSetting().getFromValue('Activate Cool', self, True)
 		settings.LabelDisplay().getFromName('- Fan settings (priority: top-down) -', self )
-		self.fanmaxPWM = settings.IntSpin().getFromValue(0, 'Full Fan Speed (0-255):', self, 255, 200)
+		self.fanSpeedMin = settings.IntSpin().getFromValue(0, 'Fan speed min (%):', self, 100, 100)
+		self.fanSpeedMax = settings.IntSpin().getFromValue(0, 'Fan speed max (%):', self, 100, 100)
 		self.turnFanOnAtBeginning = settings.BooleanSetting().getFromValue('Turn Fan On at Beginning', self, True)
-		self.fanFirstLayer = settings.IntSpin().getFromValue(0, 'Do Not Use Fan Before Layer (integer):', self, 100, 5)
+		self.turnFanOffAtEnding = settings.BooleanSetting().getFromValue('Turn Fan Off at Ending', self, True)
+		self.fanTurnOnLayerNr = settings.IntSpin().getFromValue(0, 'Turn fan on at layer (integer):', self, 100, 5)
 		self.bridgeFan = settings.BooleanSetting().getFromValue('Force Fan on Bridge Layers', self, False)
 		self.maximumFanLayerTime = settings.FloatSpin().getFromValue(0.0, 'Maximum Layer Time for Fan use (seconds):', self, 240.0, 40.0)
 		self.fullFanLayerTime = settings.FloatSpin().getFromValue(0.0, 'Full Fan Speed Below Layer Time (seconds):', self, 240.0, 20.0)
+		
 		settings.LabelSeparator().getFromRepository(self)
 		self.coolType = settings.MenuButtonDisplay().getFromName('Cool Type:', self)
 		self.orbit = settings.MenuRadio().getFromMenuButtonDisplay(self.coolType, 'Orbit', self, False)
@@ -158,16 +163,19 @@ class CoolRepository(object):
 		self.maximumCool = settings.FloatSpin().getFromValue(0.0, 'Maximum Cool (Celcius):', self, 10.0, 2.0)
 		self.minimumLayerTime = settings.FloatSpin().getFromValue(0.0, 'Minimum Layer Time (seconds):', self, 120.0, 60.0)
 		self.minimumOrbitalRadius = settings.FloatSpin().getFromValue(0.0, 'Minimum Orbital Radius (millimeters):', self, 20.0, 10.0)
+		
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Name of Alteration Files -', self )
 		self.nameOfCoolEndFile = settings.StringSetting().getFromValue('Name of Cool End File:', self, 'cool_end.gcode')
 		self.nameOfCoolStartFile = settings.StringSetting().getFromValue('Name of Cool Start File:', self, 'cool_start.gcode')
+		
 		settings.LabelSeparator().getFromRepository(self)
 		self.bridgeCool = settings.FloatSpin().getFromValue(0.0, 'Bridge Cool (Celcius):', self, 10.0, 1.0)
 		self.orbitalOutset = settings.FloatSpin().getFromValue(1.0, 'Orbital Outset (millimeters):', self, 5.0, 2.0)
-		self.turnFanOffAtEnding = settings.BooleanSetting().getFromValue('Turn Fan Off at Ending', self, True)
-		self.executeTitle = 'Cool'
+		self.minimumFeedRate = settings.FloatSpin().getFromValue(0.0, 'Minimum feed rate (mm/s):', self, 10.0, 5.0)
 
+		self.executeTitle = 'Cool'
+		
 	def execute(self):
 		'Cool button has been clicked.'
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode(
@@ -183,6 +191,7 @@ class CoolSkein(object):
 		self.coolTemperature = None
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.feedRateMinute = 960.0
+		self.minFeedrateMinute = 300
 		self.highestZ = 1.0
 		self.isBridgeLayer = False
 		self.isExtruderActive = False
@@ -194,6 +203,9 @@ class CoolSkein(object):
 		self.oldFlowRateString = None
 		self.oldLocation = None
 		self.oldTemperature = None
+		self.fanEnabled = False
+		self.lastFanSpeed = 0
+
 
 	def addCoolOrbits(self, remainingOrbitTime):
 		'Add the minimum radius cool orbits.'
@@ -224,12 +236,16 @@ class CoolSkein(object):
 
 	def addCoolTemperature(self, remainingOrbitTime):
 		'Parse a gcode line and add it to the cool skein.'
+		if self.repository.minimumLayerTime.value < 0.0001:
+			return
 		layerCool = self.repository.maximumCool.value * remainingOrbitTime / self.repository.minimumLayerTime.value
 		if self.isBridgeLayer:
 			layerCool = max(self.repository.bridgeCool.value, layerCool)
 		if self.oldTemperature != None and layerCool != 0.0:
 			self.coolTemperature = self.oldTemperature - layerCool
 			self.addTemperature(self.coolTemperature)
+			
+
 
 	def addFlowRate(self, flowRate):
 		'Add a multipled line of flow rate if different.'
@@ -264,6 +280,7 @@ class CoolSkein(object):
 		self.halfCorner = complex(repository.minimumOrbitalRadius.value, repository.minimumOrbitalRadius.value)
 		self.lines = archive.getTextLines(gcodeText)
 		self.minimumArea = 4.0 * repository.minimumOrbitalRadius.value * repository.minimumOrbitalRadius.value
+		self.minFeedrateMinute = repository.minimumFeedRate.value * 60
 		self.parseInitialization()
 		self.boundingRectangle = gcodec.BoundingRectangle().getFromGcodeLines(self.lines[self.lineIndex :], 0.5 * self.edgeWidth)
 		margin = 0.2 * self.edgeWidth
@@ -338,7 +355,7 @@ class CoolSkein(object):
 			elif firstWord == '(<edgeWidth>':
 				self.edgeWidth = float(splitLine[1])
 				if self.repository.turnFanOnAtBeginning.value:
-					self.distanceFeedRate.addLine('M106 S%d' % (self.repository.fanmaxPWM.value) )
+					self.setFanSpeed(self.repository.fanSpeedMax.value)
 			elif firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('cool')
 				return
@@ -348,6 +365,33 @@ class CoolSkein(object):
 				self.orbitalFeedRatePerSecond = float(splitLine[1])
 			self.distanceFeedRate.addLine(line)
 
+	def addFanSpeed(self, remainingOrbitTime, layerTime):
+		if self.repository.bridgeFan.value and self.isBridgeLayer:
+			self.setFanSpeed(self.repository.fanSpeedMax.value)
+			"print 'Full Fan Speed ! (Bridge layer)"
+		elif layerTime <= self.repository.fullFanLayerTime.value:
+			self.setFanSpeed(self.repository.fanSpeedMax.value)
+			"print 'Full Fan Speed ! (Layer time is under %5.3f' % (self.repository.fullFanLayerTime.value)"
+		elif layerTime <= self.repository.maximumFanLayerTime.value:
+			fanSpeedArea = ( self.repository.maximumFanLayerTime.value - self.repository.fullFanLayerTime.value )
+			'with longer layerTime fanPWM gets smaller'
+			fanSpeed = round( ( ( self.repository.maximumFanLayerTime.value - layerTime ) / fanSpeedArea ) * self.repository.fanSpeedMax.value) 
+			if fanSpeed < self.repository.fanSpeedMin.value:
+				fanSpeed = 0
+			self.setFanSpeed(fanSpeed)
+			"print 'PWM Fan Speed (fanSpeedArea : %5.3f / fanSpeed : %d)' % (fanSpeedArea, fanSpeed)"
+		else:
+			self.setFanSpeed(0)
+			"print 'Fan Off (Layer time is above %5.3f)' % (self.repository.maximumFanLayerTime.value)"
+
+	def setFanSpeed(self, fanSpeed):
+		if self.lastFanSpeed != fanSpeed:
+			if fanSpeed < self.repository.fanSpeedMin.value:
+				self.distanceFeedRate.addLine( 'M107' )		
+			else:
+				self.distanceFeedRate.addLine('M106 S%d' % (fanSpeed * 255 / 100) )
+			self.lastFanSpeed = fanSpeed
+		
 	def parseLine(self, line):
 		'Parse a gcode line and add it to the cool skein.'
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
@@ -379,25 +423,18 @@ class CoolSkein(object):
 			self.distanceFeedRate.addLinesSetAbsoluteDistanceMode(self.coolStartLines)
 			layerTime = self.getLayerTime()
 			"print 'Layer time : %5.3f' % (layerTime)"
-			if not self.repository.turnFanOnAtBeginning.value and self.layerCount.layerIndex >= self.repository.fanFirstLayer.value:
-				if (self.repository.bridgeFan.value and self.isBridgeLayer) or layerTime <= self.repository.fullFanLayerTime.value:
-					self.distanceFeedRate.addLine( 'M106 S%d' % (self.repository.fanmaxPWM.value) )
-					"print 'Full Fan Speed ! (Layer time is under %5.3f' % (self.repository.fullFanLayerTime.value)"
-				elif layerTime <= self.repository.maximumFanLayerTime.value:
-					fanPWMArea = ( self.repository.maximumFanLayerTime.value - self.repository.fullFanLayerTime.value )
-					fanPWM = round( ( ( self.repository.maximumFanLayerTime.value - layerTime ) / fanPWMArea ) * self.repository.fanmaxPWM.value )
-					self.distanceFeedRate.addLine( 'M106 S%d' % (fanPWM) )
-					"print 'PWM Fan Speed (fanPWMArea : %5.3f / fanPWM : %d)' % (fanPWMArea, fanPWM)"
-				else:
-					self.distanceFeedRate.addLine( 'M107' )
-					"print 'Fan Off (Layer time is above %5.3f)' % (self.repository.maximumFanLayerTime.value)"
+			if self.repository.turnFanOnAtBeginning.value and self.layerCount.layerIndex >= self.repository.fanTurnOnLayerNr.value:
+				self.fanEnabled = True
 			remainingOrbitTime = max(self.repository.minimumLayerTime.value - layerTime, 0.0)
 			self.addCoolTemperature(remainingOrbitTime)
+			if self.fanEnabled:
+				self.addFanSpeed(remainingOrbitTime, layerTime)
 			if self.repository.orbit.value:
 				self.addOrbitsIfNecessary(remainingOrbitTime)
 			else:
 				self.setMultiplier(remainingOrbitTime)
-				self.addFlowRate(self.multiplier * self.oldFlowRate)
+				if self.oldFlowRate != None:
+					self.addFlowRate(self.multiplier * self.oldFlowRate)
 			z = float(splitLine[1])
 			self.boundaryLayer = euclidean.LoopLayer(z)
 			self.highestZ = max(z, self.highestZ)
@@ -409,7 +446,8 @@ class CoolSkein(object):
 			if self.coolTemperature != None:
 				self.addTemperature(self.oldTemperature)
 				self.coolTemperature = None
-			self.addFlowRate(self.oldFlowRate)
+			if self.oldFlowRate != None:
+				self.addFlowRate(self.oldFlowRate)
 		elif firstWord == '(<nestedRing>)':
 			self.boundaryLoop = []
 			self.boundaryLayer.loops.append(self.boundaryLoop)
@@ -420,6 +458,15 @@ class CoolSkein(object):
 		layerTimeActive = self.getLayerTimeActive()
 		self.multiplier = min(1.0, layerTimeActive / (remainingOrbitTime + layerTimeActive))
 		
+	def setMultiplier(self, remainingOrbitTime):
+		'Set the feed and flow rate multiplier.'
+		layerTimeActive = self.getLayerTimeActive()
+		if remainingOrbitTime + layerTimeActive > 0.00001:
+			self.multiplier = min(1.0, layerTimeActive / (remainingOrbitTime + layerTimeActive))
+			if self.feedRateMinute * self.multiplier < self.minFeedrateMinute:
+				self.multiplier = self.minFeedrateMinute / self.feedRateMinute
+		else:
+			self.multiplier = 1.0
 
 
 def main():

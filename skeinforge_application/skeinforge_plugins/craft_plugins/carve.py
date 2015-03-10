@@ -102,6 +102,7 @@ from fabmetheus_utilities import settings
 from fabmetheus_utilities import svg_writer
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
+from fabmetheus_utilities.vector3 import Vector3
 import math
 import sys
 import time
@@ -154,7 +155,7 @@ class CarveRepository(object):
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getTranslatorFileTypeTuples(), 'Open File for Carve', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Carve')
 		self.addLayerTemplateToSVG = settings.BooleanSetting().getFromValue('Add Layer Template to SVG', self, True)
-		self.edgeWidthOverHeight = settings.FloatSpin().getFromValue( 1.4, 'Edge Width over Height (ratio):', self, 2.2, 1.8 )
+		self.edgeWidth = settings.FloatSpin().getFromValue( 0.1, 'Edge Width (mm):', self, 2.2, 0.4 )
 		self.extraDecimalPlaces = settings.FloatSpin().getFromValue(0.0, 'Extra Decimal Places (float):', self, 3.0, 2.0)
 		self.importCoarseness = settings.FloatSpin().getFromValue( 0.5, 'Import Coarseness (ratio):', self, 2.0, 1.0 )
 		self.layerHeight = settings.FloatSpin().getFromValue( 0.1, 'Layer Height (mm):', self, 1.0, 0.4 )
@@ -170,6 +171,12 @@ class CarveRepository(object):
 		self.svgViewer = settings.StringSetting().getFromValue('SVG Viewer:', self, 'webbrowser')
 		settings.LabelSeparator().getFromRepository(self)
 		self.executeTitle = 'Carve'
+		
+		self.centerX = settings.FloatSpin().getFromValue(0.0, 'CenterX', self, 1000.0, 0.0);
+		self.centerY = settings.FloatSpin().getFromValue(0.0, 'CenterY', self, 1000.0, 0.0);
+		self.objectSink = settings.FloatSpin().getFromValue(0.0, 'ObjectSink', self, 1000.0, 0.0)
+		self.matrix = settings.StringSetting().getFromValue('ObjectMatrix', self, '1,0,0,0,1,0,0,0,1')
+		self.alternativeCenter = settings.StringSetting().getFromValue('AlternativeCenterFile', self, '')
 
 	def execute(self):
 		"Carve button has been clicked."
@@ -182,8 +189,44 @@ class CarveSkein(object):
 	"A class to carve a carving."
 	def getCarvedSVG(self, carving, fileName, repository):
 		"Parse gnu triangulated surface text and store the carved gcode."
+
+		matrix = map(float, repository.matrix.value.split(','))
+
+		for i in xrange(0, len(carving.vertexes)):
+			x = carving.vertexes[i].x
+			y = carving.vertexes[i].y
+			z = carving.vertexes[i].z
+			carving.vertexes[i] = Vector3(
+				x * matrix[0] + y * matrix[3] + z * matrix[6],
+				x * matrix[1] + y * matrix[4] + z * matrix[7],
+				x * matrix[2] + y * matrix[5] + z * matrix[8])
+
+		if repository.alternativeCenter.value != '':
+			carving2 = svg_writer.getCarving(repository.alternativeCenter.value)
+			for i in xrange(0, len(carving2.vertexes)):
+				x = carving2.vertexes[i].x
+				y = carving2.vertexes[i].y
+				z = carving2.vertexes[i].z
+				carving2.vertexes[i] = Vector3(
+					x * matrix[0] + y * matrix[3] + z * matrix[6],
+					x * matrix[1] + y * matrix[4] + z * matrix[7],
+					x * matrix[2] + y * matrix[5] + z * matrix[8])
+			minZ = carving2.getMinimumZ()
+			minSize = carving2.getCarveCornerMinimum()
+			maxSize = carving2.getCarveCornerMaximum()
+		else:
+			minZ = carving.getMinimumZ()
+			minSize = carving.getCarveCornerMinimum()
+			maxSize = carving.getCarveCornerMaximum()
+		for v in carving.vertexes:
+			v.z -= minZ + repository.objectSink.value
+			v.x -= minSize.x + (maxSize.x - minSize.x) / 2
+			v.y -= minSize.y + (maxSize.y - minSize.y) / 2
+			v.x += repository.centerX.value
+			v.y += repository.centerY.value
+
 		layerHeight = repository.layerHeight.value
-		edgeWidth = repository.edgeWidthOverHeight.value * layerHeight
+		edgeWidth = repository.edgeWidth.value
 		carving.setCarveLayerHeight(layerHeight)
 		importRadius = 0.5 * repository.importCoarseness.value * abs(edgeWidth)
 		carving.setCarveImportRadius(max(importRadius, 0.001 * layerHeight))
@@ -194,7 +237,7 @@ class CarveSkein(object):
 			return ''
 		layerHeight = carving.getCarveLayerHeight()
 		decimalPlacesCarried = euclidean.getDecimalPlacesCarried(repository.extraDecimalPlaces.value, layerHeight)
-		edgeWidth = repository.edgeWidthOverHeight.value * layerHeight
+		edgeWidth = repository.edgeWidth.value
 		svgWriter = svg_writer.SVGWriter(
 			repository.addLayerTemplateToSVG.value,
 			carving.getCarveCornerMaximum(),

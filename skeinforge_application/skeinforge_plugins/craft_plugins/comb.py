@@ -1,6 +1,7 @@
 """
 This page is in the table of contents.
 Comb is a craft plugin to bend the extruder travel paths around holes in the slices, to avoid stringers.
+It moves the extruder to the inside of perimeters before turning the extruder on so any start up ooze will be inside the shape. 
 
 The comb manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Comb
@@ -135,7 +136,6 @@ class BoundarySegment(object):
 
 	def getSegment(self, boundarySegmentIndex, boundarySegments, edgeWidth, runningJumpSpace):
 		'Get both paths along the loop from the point closest to the begin to the point closest to the end.'
-		negativeEdgeWidth = -edgeWidth
 		nextBoundarySegment = boundarySegments[boundarySegmentIndex + 1]
 		nextBegin = nextBoundarySegment.segment[0]
 		end = getJumpPointIfInside(self.boundary, nextBegin, edgeWidth, runningJumpSpace)
@@ -154,7 +154,7 @@ class CombRepository(object):
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.comb.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Comb', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Comb')
-		self.activateComb = settings.BooleanSetting().getFromValue('Activate Comb', self, False )
+		self.activateComb = settings.BooleanSetting().getFromValue('Activate Comb', self, True )
 		self.runningJumpSpace = settings.FloatSpin().getFromValue(0.0, 'Running Jump Space (mm):', self, 5.0, 2.0)
 		self.executeTitle = 'Comb'
 
@@ -281,7 +281,7 @@ class CombSkein(object):
 		maximumX = max(beginRotated.real, endRotated.real)
 		minimumX = min(beginRotated.real, endRotated.real)
 		for xIntersection in switchX:
-			if xIntersection.x > minimumX and xIntersection.x < maximumX:
+			if minimumX < xIntersection.x < maximumX:
 				point = segment * complex(xIntersection.x, y)
 				points.append(point)
 				boundaryIndexes.append(xIntersection.index)
@@ -360,12 +360,12 @@ class CombSkein(object):
 			beginIndex = pointIndex - 1
 			if beginIndex >= 0:
 				begin = shortestPath[beginIndex]
-				centerPerpendicular = intercircle.getWiddershinsByLength(center, begin, self.edgeWidth)
+				centerPerpendicular = intercircle.getWiddershinsByLength(center, begin, self.edgeWidth*2.0)
 			centerEnd = None
 			endIndex = pointIndex + 1
 			if endIndex < len(shortestPath):
 				end = shortestPath[endIndex]
-				centerEnd = intercircle.getWiddershinsByLength(end, center, self.edgeWidth)
+				centerEnd = intercircle.getWiddershinsByLength(end, center, self.edgeWidth*2.0)
 			if centerPerpendicular == None:
 				centerPerpendicular = centerEnd
 			elif centerEnd != None:
