@@ -12,6 +12,9 @@ http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Cool
 Allan Ecker aka The Masked Retriever's has written the "Skeinforge Quicktip: Cool" at:
 http://blog.thingiverse.com/2009/07/28/skeinforge-quicktip-cool/
 
+Discussion
+http://forums.reprap.org/read.php?154,149615,149787#msg-149787#msg-149787
+
 ==Operation==
 The default 'Activate Cool' checkbox is on.  When it is on, the functions described below will work, when it is off, the functions will not be called.
 

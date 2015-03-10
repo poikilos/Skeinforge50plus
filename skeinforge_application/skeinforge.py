@@ -230,6 +230,8 @@ from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import os
 import sys
 
+# move settings from alteration to distanceFeedRate
+# consolidate side loops for voronoi and sponge_slice, add boundary
 
 # restore clip
 # multiple shell
@@ -240,6 +242,7 @@ import sys
 # announce dwindle
 # announce fill sharpestAngle
 # announce inset volumeFraction
+# document announce skirt
 # announce splodge volumeFraction
 # announce statistic extrusion diameter gone
 # announce vectorwrite
@@ -262,6 +265,7 @@ import sys
 #
 #
 # retraction step leave
+# rename fill extra shells to stuff like Extra Base Shells
 # melt _extrusion
 # think about http://code.google.com/p/skeinarchiver/ and/or undo
 # getStrokeRadius default to edgeWidth
@@ -340,6 +344,7 @@ import sys
 # dovetail
 # maybe not getNewObject, getNew, addToBoolean
 # work out close and radius
+# maybe restore clip if the problem can be defined, the email said there was a problem leading to a ridge but there was no follow up
 # maybe have add function as well as append for list and string
 # maybe move and give geometryOutput to cube, cylinder, sphere
 #

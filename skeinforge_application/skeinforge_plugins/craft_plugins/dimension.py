@@ -105,6 +105,7 @@ import __init__
 
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities.geometry.solids import triangle_mesh
+from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
@@ -169,8 +170,12 @@ class DimensionRepository(object):
 		self.firmwareRetraction = settings.BooleanSetting().getFromValue('Firmware Retraction (via G10/G11)', self, False)
 		self.extruderRetractionSpeed = settings.FloatSpin().getFromValue( 4.0, 'Extruder Retraction Speed (mm/s):', self, 34.0, 13.3 )
 		self.retractionDistance = settings.FloatSpin().getFromValue( 0.0, 'Retraction Distance (millimeters):', self, 100.0, 0.0 )
-		self.restartExtraDistance = settings.FloatSpin().getFromValue( 0.0, 'Restart Extra Distance (millimeters):', self, 100.0, 0.0 )
+		settings.LabelSeparator().getFromRepository(self)
+		settings.LabelDisplay().getFromName('- Restart -', self)
+		self.layerExtraDistance = settings.FloatSpin().getFromValue(-1.0, 'Layer Extra Distance (millimeters):', self, 3.0, 0.0)
+		self.restartExtraDistance = settings.FloatSpin().getFromValue(-1.0, 'Restart Extra Distance (millimeters):', self, 3.0, 0.0)
 		self.executeTitle = 'Dimension'
+
 
 	def execute(self):
 		'Dimension button has been clicked.'
@@ -222,7 +227,9 @@ class DimensionSkein(object):
 		if self.operatingFlowRate == None:
 			print('Warning, there is no operatingFlowRate so dimension will do nothing.')
 			return gcodeText
-		self.restartDistance = self.repository.retractionDistance.value + self.repository.restartExtraDistance.value
+		self.layerRestartDistance = self.repository.retractionDistance.value + self.repository.layerExtraDistance.value
+		self.threadRestartDistance = self.repository.retractionDistance.value + self.repository.restartExtraDistance.value
+		self.restartDistance = self.threadRestartDistance
 		self.extruderRetractionSpeedMinuteString = self.distanceFeedRate.getRounded(60.0 * self.repository.extruderRetractionSpeed.value)
 		if self.maximumZFeedRatePerSecond != None and self.travelFeedRatePerSecond != None:
 			self.zDistanceRatio = self.travelFeedRatePerSecond / self.maximumZFeedRatePerSecond
@@ -404,6 +411,7 @@ class DimensionSkein(object):
 			if self.layerIndex == 0 and self.repository.relativeExtrusionDistance.value:
 				self.distanceFeedRate.addLine('M83 ;Relative extrusion')
 			settings.printProgress(self.layerIndex, 'dimension')
+			self.restartDistance = self.layerRestartDistance
 		elif firstWord == '(</layer>)' or firstWord == '(<supportLayer>)' or firstWord == '(</supportLayer>)':
 			if self.totalExtrusionDistance > 0.0 and not self.repository.relativeExtrusionDistance.value:
 				self.distanceFeedRate.addLine('G92 E0')
@@ -419,7 +427,8 @@ class DimensionSkein(object):
 						if not self.repository.relativeExtrusionDistance.value:
 							self.distanceFeedRate.addLine('G92 E0')
 							self.totalExtrusionDistance = 0.0
-			self.isRetracted = False			
+			self.restartDistance = self.threadRestartDistance
+			self.isRetracted = False
 			self.isExtruderActive = True
 		elif firstWord == 'M103':
 			if self.repository.firmwareRetraction.value:
