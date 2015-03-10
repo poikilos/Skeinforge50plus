@@ -172,7 +172,7 @@ class SpeedRepository(object):
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Speed', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Speed')
 		self.activateSpeed = settings.BooleanSetting().getFromValue('Activate Speed', self, True )
-		self.addFlowRate = settings.BooleanSetting().getFromValue('Add Flow Rate:', self, True )
+		self.addFlowRate = settings.BooleanSetting().getFromValue('Add Flow Rate:', self, False )
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Bridge -', self )
 		self.bridgeFeedRateMultiplier = settings.FloatSpin().getFromValue( 0.8, 'Bridge Feed Rate Multiplier (ratio):', self, 1.2, 1.0 )
@@ -182,18 +182,22 @@ class SpeedRepository(object):
 		self.dutyCycleAtBeginning = settings.FloatSpin().getFromValue( 0.0, 'Duty Cyle at Beginning (portion):', self, 1.0, 1.0 )
 		self.dutyCycleAtEnding = settings.FloatSpin().getFromValue( 0.0, 'Duty Cyle at Ending (portion):', self, 1.0, 0.0 )
 		settings.LabelSeparator().getFromRepository(self)
-		self.feedRatePerSecond = settings.FloatSpin().getFromValue( 2.0, 'Feed Rate (mm/s):', self, 50.0, 16.0 )
-		self.flowRateSetting = settings.FloatSpin().getFromValue( 50.0, 'Flow Rate Setting (float):', self, 250.0, 210.0 )
+		self.feedRatePerSecond = settings.FloatSpin().getFromValue( 2.0, 'Feed Rate (mm/s):', self, 250.0, 50.0 )
+		self.flowRateSetting = settings.FloatSpin().getFromValue( 50.0, 'Flow Rate Setting (float):', self, 250.0, 50.0 )
 		settings.LabelSeparator().getFromRepository(self)
-		settings.LabelDisplay().getFromName('- Object First Layer -', self)
+		settings.LabelDisplay().getFromName('- Object First Layers -', self)
 		self.objectFirstLayerFeedRateInfillMultiplier = settings.FloatSpin().getFromValue(
 			0.2, 'Object First Layer Feed Rate Infill Multiplier (ratio):', self, 1.0, 0.4)
 		self.objectFirstLayerFeedRatePerimeterMultiplier = settings.FloatSpin().getFromValue(
 			0.2, 'Object First Layer Feed Rate Perimeter Multiplier (ratio):', self, 1.0, 0.4)
+		self.objectFirstLayerFeedRateTravelMultiplier = settings.FloatSpin().getFromValue(
+			0.2, 'Object First Layer Feed Rate Travel Multiplier (ratio):', self, 1.0, 0.4)
 		self.objectFirstLayerFlowRateInfillMultiplier = settings.FloatSpin().getFromValue(
 			0.2, 'Object First Layer Flow Rate Infill Multiplier (ratio):', self, 1.0, 0.4)
 		self.objectFirstLayerFlowRatePerimeterMultiplier = settings.FloatSpin().getFromValue(
 			0.2, 'Object First Layer Flow Rate Perimeter Multiplier (ratio):', self, 1.0, 0.4)
+		self.objectFirstLayersLayerAmount = settings.IntSpin().getFromValue(
+			1, 'Object First Layers Amount Of Layers For Speed Change:', self, 10, 3)
 		settings.LabelSeparator().getFromRepository(self)
 		self.orbitalFeedRateOverOperatingFeedRate = settings.FloatSpin().getFromValue( 0.1, 'Orbital Feed Rate over Operating Feed Rate (ratio):', self, 0.9, 0.5 )
 		self.maximumZFeedRatePerSecond = settings.FloatSpin().getFromValue(0.5, 'Maximum Z Feed Rate (mm/s):', self, 10.0, 1.0)
@@ -202,8 +206,10 @@ class SpeedRepository(object):
 		self.perimeterFeedRateMultiplier = settings.FloatSpin().getFromValue(0.5, 'Perimeter Feed Rate Multiplier (ratio):', self, 1.0, 1.0)
 		self.perimeterFlowRateMultiplier = settings.FloatSpin().getFromValue(0.5, 'Perimeter Flow Rate Multiplier (ratio):', self, 1.0, 1.0)
 		settings.LabelSeparator().getFromRepository(self)
-		self.travelFeedRatePerSecond = settings.FloatSpin().getFromValue( 2.0, 'Travel Feed Rate (mm/s):', self, 50.0, 16.0 )
+		self.travelFeedRatePerSecond = settings.FloatSpin().getFromValue( 2.0, 'Travel Feed Rate (mm/s):', self, 350.0, 250.0 )
 		self.executeTitle = 'Speed'
+		
+		self.bottomLayerFlowRateMultiplier = settings.FloatSpin().getFromValue(0.0, 'Bottom layer flow rate (ratio):', self, 10.0, 1.0)
 
 	def execute(self):
 		"Speed button has been clicked."
@@ -235,11 +241,13 @@ class SpeedSkein(object):
 			flowRate *= self.repository.bridgeFlowRateMultiplier.value
 		if self.isEdgePath:
 			flowRate *= self.repository.perimeterFlowRateMultiplier.value
-		if self.layerIndex == 0:
+		if self.layerIndex < self.repository.objectFirstLayersLayerAmount.value:
 			if self.isEdgePath:
-				flowRate *= self.repository.objectFirstLayerFlowRatePerimeterMultiplier.value
+				flowRate *= ((self.repository.objectFirstLayerFlowRatePerimeterMultiplier.value * (self.repository.objectFirstLayersLayerAmount.value - self.layerIndex)) + self.layerIndex) / self.repository.objectFirstLayersLayerAmount.value
 			else:
-				flowRate *= self.repository.objectFirstLayerFlowRateInfillMultiplier.value
+				flowRate *= ((self.repository.objectFirstLayerFlowRateInfillMultiplier.value * (self.repository.objectFirstLayersLayerAmount.value - self.layerIndex)) + self.layerIndex) / self.repository.objectFirstLayersLayerAmount.value
+		if self.layerIndex == 0:
+			flowRate *= self.repository.bottomLayerFlowRateMultiplier.value
 		if flowRate != self.oldFlowRate:
 			self.distanceFeedRate.addLine('M108 S' + euclidean.getFourSignificantFigures(flowRate))
 		self.oldFlowRate = flowRate
@@ -272,14 +280,16 @@ class SpeedSkein(object):
 			feedRateMinute *= self.repository.bridgeFeedRateMultiplier.value
 		if self.isEdgePath:
 			feedRateMinute *= self.repository.perimeterFeedRateMultiplier.value
-		if self.layerIndex == 0:
+		if self.layerIndex < self.repository.objectFirstLayersLayerAmount.value:
 			if self.isEdgePath:
-				feedRateMinute *= self.repository.objectFirstLayerFeedRatePerimeterMultiplier.value
+				feedRateMinute *= ((self.repository.objectFirstLayerFeedRatePerimeterMultiplier.value * (self.repository.objectFirstLayersLayerAmount.value - self.layerIndex)) + self.layerIndex) / self.repository.objectFirstLayersLayerAmount.value
 			else:
-				feedRateMinute *= self.repository.objectFirstLayerFeedRateInfillMultiplier.value
+				feedRateMinute *= ((self.repository.objectFirstLayerFeedRateInfillMultiplier.value * (self.repository.objectFirstLayersLayerAmount.value - self.layerIndex)) + self.layerIndex) / self.repository.objectFirstLayersLayerAmount.value
 		self.addFlowRateLine()
 		if not self.isExtruderActive:
 			feedRateMinute = self.travelFeedRateMinute
+			if self.layerIndex < self.repository.objectFirstLayersLayerAmount.value:
+				feedRateMinute *= ((self.repository.objectFirstLayerFeedRateTravelMultiplier.value * (self.repository.objectFirstLayersLayerAmount.value - self.layerIndex)) + self.layerIndex) / self.repository.objectFirstLayersLayerAmount.value
 		return self.distanceFeedRate.getLineWithFeedRate(feedRateMinute, line, splitLine)
 
 	def parseInitialization(self):
@@ -300,7 +310,7 @@ class SpeedSkein(object):
 				self.distanceFeedRate.addTagBracketedLine('objectFirstLayerFeedRateInfillMultiplier', self.repository.objectFirstLayerFeedRateInfillMultiplier.value)
 				self.distanceFeedRate.addTagBracketedLine('operatingFeedRatePerSecond', self.feedRatePerSecond )
 				if self.repository.addFlowRate.value:
-					self.distanceFeedRate.addTagBracketedLine('objectFirstLayerFlowRateInfillMultiplier', self.repository.objectFirstLayerFlowRateInfillMultiplier.value)
+					self.distanceFeedRate.addTagBracketedLine('objectFirstLayerFlowRateInfillMultiplier', self.repository.objectFirstLayerFlowRateInfillMultiplier.value * self.repository.bottomLayerFlowRateMultiplier.value)
 					self.distanceFeedRate.addTagBracketedLine('operatingFlowRate', self.repository.flowRateSetting.value )
 				orbitalFeedRatePerSecond = self.feedRatePerSecond * self.repository.orbitalFeedRateOverOperatingFeedRate.value
 				self.distanceFeedRate.addTagBracketedLine('orbitalFeedRatePerSecond', orbitalFeedRatePerSecond )
@@ -346,3 +356,4 @@ def main():
 
 if __name__ == "__main__":
 	main()
+

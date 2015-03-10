@@ -342,12 +342,15 @@ class ExportRepository(object):
 		allExportPluginFileNames = exportPluginFileNames + exportStaticPluginFileNames
 		for exportPluginFileName in allExportPluginFileNames:
 			exportPlugin = None
+			default = False
+			if exportPluginFileName == "gcode_small":
+				default = True
 			if exportPluginFileName in exportPluginFileNames:
 				path = os.path.join(exportPluginsFolderPath, exportPluginFileName)
-				exportPlugin = settings.RadioCapitalizedButton().getFromPath(exportLatentStringVar, exportPluginFileName, path, self, False)
+				exportPlugin = settings.RadioCapitalizedButton().getFromPath(exportLatentStringVar, exportPluginFileName, path, self, default)
 				exportPlugin.directoryPath = exportPluginsFolderPath
 			else:
-				exportPlugin = settings.RadioCapitalized().getFromRadio(exportLatentStringVar, exportPluginFileName, self, False)
+				exportPlugin = settings.RadioCapitalized().getFromRadio(exportLatentStringVar, exportPluginFileName, self, default)
 				exportPlugin.directoryPath = exportStaticDirectoryPath
 			self.exportPlugins.append(exportPlugin)
 		self.fileExtension = settings.StringSetting().getFromValue('File Extension:', self, 'gcode')

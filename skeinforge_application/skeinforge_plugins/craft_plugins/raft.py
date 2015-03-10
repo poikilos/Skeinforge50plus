@@ -324,7 +324,7 @@ def getVerticalEndpoints(horizontalSegmentsTable, horizontalStep, verticalOverha
 
 def setExtendedPoint( lineSegmentEnd, pointOriginal, x ):
 	'Set the point in the extended line segment.'
-	if x > min( lineSegmentEnd.point.real, pointOriginal.real ) and x < max( lineSegmentEnd.point.real, pointOriginal.real ):
+	if min( lineSegmentEnd.point.real, pointOriginal.real ) < x < max( lineSegmentEnd.point.real, pointOriginal.real ):
 		lineSegmentEnd.point = complex( x, pointOriginal.imag )
 
 def writeOutput(fileName, shouldAnalyze=True):
@@ -402,6 +402,10 @@ class RaftRepository(object):
 		self.supportChoiceExteriorOnly = settings.MenuRadio().getFromMenuButtonDisplay(self.supportMaterialChoice, 'Exterior Only', self, False)
 		self.supportMinimumAngle = settings.FloatSpin().getFromValue(40.0, 'Support Minimum Angle (degrees):', self, 80.0, 60.0)
 		self.executeTitle = 'Raft'
+		self.supportMargin = settings.FloatSpin().getFromValue(
+			1.0, 'Support Margin (mm):', self, 5.0, 3.0)
+		self.supportOffsetX = settings.FloatSpin().getFromValue(0.0, 'Support Offset X (mm):', self, 100.0, 0.0)
+		self.supportOffsetY = settings.FloatSpin().getFromValue(0.0, 'Support Offset Y (mm):', self, 100.0, 0.0)
 
 	def execute(self):
 		'Raft button has been clicked.'
@@ -585,9 +589,6 @@ class RaftSkein(object):
 
 	def addRaft(self):
 		'Add the raft.'
-		if len(self.boundaryLayers) < 0:
-			print('this should never happen, there are no boundary layers in addRaft')
-			return
 		self.baseLayerThicknessOverLayerThickness = self.repository.baseLayerThicknessOverLayerThickness.value
 		baseExtrusionWidth = self.edgeWidth * self.baseLayerThicknessOverLayerThickness
 		self.baseStep = baseExtrusionWidth / self.repository.baseInfillDensity.value
@@ -598,7 +599,11 @@ class RaftSkein(object):
 		self.cornerMinimumComplex = self.cornerMinimum.dropAxis()
 		originalExtent = self.cornerMaximumComplex - self.cornerMinimumComplex
 		self.raftOutsetRadius = self.repository.raftMargin.value + self.repository.raftAdditionalMarginOverLengthPercent.value * 0.01 * max(originalExtent.real, originalExtent.imag)
+		self.supportOutsetRadius = self.repository.supportMargin.value
 		self.setBoundaryLayers()
+		if len(self.boundaryLayers) < 1:
+			print('this should never happen, there are no boundary layers in addRaft')
+			return
 		outsetSeparateLoops = intercircle.getInsetSeparateLoopsFromLoops(self.boundaryLayers[0].loops, -self.raftOutsetRadius, 0.8)
 		self.interfaceIntersectionsTable = {}
 		euclidean.addXIntersectionsFromLoopsForTable(outsetSeparateLoops, self.interfaceIntersectionsTable, self.interfaceStep)
@@ -718,6 +723,7 @@ class RaftSkein(object):
 				supportFlowRateMultiplied *= self.objectFirstLayerFlowRateInfillMultiplier
 		self.addFlowRate(supportFlowRateMultiplied)
 		for path in paths:
+			path = map(lambda p: p + complex(self.supportOffsetX, self.supportOffsetY), path)
 			self.distanceFeedRate.addGcodeFromFeedRateThreadZ(feedRateMinuteMultiplied, path, self.travelFeedRateMinute, z)
 		self.addFlowRate(self.oldFlowRate)
 		self.addTemperatureOrbits(endpoints, self.supportLayersTemperature, z)
@@ -816,6 +822,8 @@ class RaftSkein(object):
 		self.minimumSupportRatio = math.tan( math.radians( repository.supportMinimumAngle.value ) )
 		self.supportEndLines = settings.getAlterationFileLines(repository.nameOfSupportEndFile.value)
 		self.supportStartLines = settings.getAlterationFileLines(repository.nameOfSupportStartFile.value)
+		self.supportOffsetX = repository.supportOffsetX.value
+		self.supportOffsetY = repository.supportOffsetY.value
 		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization()
 		self.temperatureChangeTimeBeforeRaft = 0.0
@@ -992,7 +1000,7 @@ class RaftSkein(object):
 				if len(endpoints) < 1:
 					temperatureChangeTimeBeforeNextLayers = self.getTemperatureChangeTime( self.objectNextLayersTemperature )
 					self.addTemperatureLineIfDifferent( self.objectNextLayersTemperature )
-					if self.repository.addRaftElevateNozzleOrbitSetAltitude.value and len( boundaryLayer.loops ) > 0:
+					if self.repository.addRaftElevateNozzleOrbitSetAltitude.value and boundaryLayer != None and len( boundaryLayer.loops ) > 0:
 						self.addOperatingOrbits( boundaryLayer.loops, euclidean.getXYComplexFromVector3( self.oldLocation ), temperatureChangeTimeBeforeNextLayers, layerZ )
 			if len(endpoints) > 0:
 				self.addSupportLayerTemperature( endpoints, layerZ )
@@ -1040,7 +1048,7 @@ class RaftSkein(object):
 			euclidean.joinXIntersectionsTables(aboveXIntersectionsTable, xIntersectionsTable)
 		for supportLayerIndex in xrange(len(self.supportLayers)):
 			supportLayer = self.supportLayers[supportLayerIndex]
-			self.extendXIntersections(supportLayer.supportLoops, self.raftOutsetRadius, supportLayer.xIntersectionsTable)
+			self.extendXIntersections(supportLayer.supportLoops, self.supportOutsetRadius, supportLayer.xIntersectionsTable)
 		for supportLayer in self.supportLayers:
 			euclidean.subtractXIntersectionsTable(supportLayer.xIntersectionsTable, supportLayer.fillXIntersectionsTable)
 		self.addSegmentTablesToSupportLayers()

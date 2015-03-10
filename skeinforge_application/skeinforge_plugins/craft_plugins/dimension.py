@@ -198,10 +198,11 @@ class DimensionSkein(object):
 		self.travelFeedRatePerSecond = None
 		self.zDistanceRatio = 5.0
 		self.isRetracted = False
+		self.maxDistancePerMove = 30
 
 	def addLinearMoveExtrusionDistanceLine(self, extrusionDistance):
 		'Get the extrusion distance string from the extrusion distance.'
-		if self.repository.extruderRetractionSpeed.value != 0.0:
+		if self.repository.extruderRetractionSpeed.value != 0.0 and extrusionDistance != 0.0:
 			self.distanceFeedRate.output.write('G1 F%s\n' % self.extruderRetractionSpeedMinuteString)
 			self.distanceFeedRate.output.write('G1%s\n' % self.getExtrusionDistanceStringFromExtrusionDistance(extrusionDistance))
 			self.distanceFeedRate.output.write('G1 F%s\n' % self.distanceFeedRate.getRounded(self.feedRateMinute))
@@ -213,7 +214,7 @@ class DimensionSkein(object):
 		filamentPackingArea = math.pi * filamentRadius * filamentRadius * repository.filamentPackingDensity.value
 		self.minimumTravelForRetraction = self.repository.minimumTravelForRetraction.value
 		self.doubleMinimumTravelForRetraction = self.minimumTravelForRetraction + self.minimumTravelForRetraction
- 		self.lines = archive.getTextLines(gcodeText)
+		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization()
 		if not self.repository.retractWithinIsland.value:
 			self.parseBoundaries()
@@ -245,9 +246,18 @@ class DimensionSkein(object):
 			location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 			if self.oldLocation != None:
 				distance = abs( location - self.oldLocation )
+				if distance > self.maxDistancePerMove * 1.1:
+					extra = ''
+					while distance > self.maxDistancePerMove * 1.1:
+						self.oldLocation.z = location.z
+						self.oldLocation += (location - self.oldLocation) / distance * self.maxDistancePerMove
+						distance -= self.maxDistancePerMove
+						e = self.getExtrusionDistanceString(self.maxDistancePerMove, splitLine)
+						extra += self.distanceFeedRate.getLinearGcodeMovementWithFeedRate(self.feedRateMinute, self.oldLocation.dropAxis(), self.oldLocation.z) + e + '\n'
+					line = extra + line
 			self.oldLocation = location
 		else:
-			if self.oldLocation == None:
+			if self.oldLocation is None:
 				print('Warning: There was no absolute location when the G91 command was parsed, so the absolute location will be set to the origin.')
 				self.oldLocation = Vector3()
 			location = gcodec.getLocationFromSplitLine(None, splitLine)
@@ -294,8 +304,11 @@ class DimensionSkein(object):
 			print(distance)
 			print(splitLine)
 			return ''
-		scaledFlowRate = self.flowRate * self.flowScaleSixty
-		return self.getExtrusionDistanceStringFromExtrusionDistance(scaledFlowRate / self.feedRateMinute * distance)
+		if self.operatingFlowRate == None:
+			return self.getExtrusionDistanceStringFromExtrusionDistance(self.flowScaleSixty / 60.0 * distance)
+		else:
+			scaledFlowRate = self.flowRate * self.flowScaleSixty
+			return self.getExtrusionDistanceStringFromExtrusionDistance(scaledFlowRate / self.feedRateMinute * distance)
 
 	def getExtrusionDistanceStringFromExtrusionDistance(self, extrusionDistance):
 		'Get the extrusion distance string from the extrusion distance.'
@@ -388,13 +401,20 @@ class DimensionSkein(object):
 			self.absoluteDistanceMode = False
 		elif firstWord == '(<layer>':
 			self.layerIndex += 1
+			if self.layerIndex == 0 and self.repository.relativeExtrusionDistance.value:
+				self.distanceFeedRate.addLine('M83 ;Relative extrusion')
 			settings.printProgress(self.layerIndex, 'dimension')
+		elif firstWord == '(</layer>)' or firstWord == '(<supportLayer>)' or firstWord == '(</supportLayer>)':
+			if self.totalExtrusionDistance > 0.0 and not self.repository.relativeExtrusionDistance.value:
+				self.distanceFeedRate.addLine('G92 E0')
+				self.totalExtrusionDistance = 0.0
 		elif firstWord == 'M101':
 			if self.isRetracted:
 				if self.repository.firmwareRetraction.value:
 					self.distanceFeedRate.addLine('G11')
 				else:
-					self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
+					if self.retractionRatio > 0.0:
+						self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
 					if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 
 						if not self.repository.relativeExtrusionDistance.value:
 							self.distanceFeedRate.addLine('G92 E0')
@@ -406,7 +426,8 @@ class DimensionSkein(object):
 				self.distanceFeedRate.addLine('G10')
 			else:
 				self.retractionRatio = self.getRetractionRatio(lineIndex)
-				self.addLinearMoveExtrusionDistanceLine(-self.repository.retractionDistance.value * self.retractionRatio)
+				if self.retractionRatio > 0.0:
+					self.addLinearMoveExtrusionDistanceLine(-self.repository.retractionDistance.value * self.retractionRatio)
 			self.isRetracted = True	
 			self.isExtruderActive = False
 		elif firstWord == 'M108':
