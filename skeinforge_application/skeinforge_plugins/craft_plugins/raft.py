@@ -549,7 +549,7 @@ class RaftSkein(object):
 		layerThicknessRatio,
 		step,
 		tagStart,
-$		z):
+		z):
 		'Add a layer from endpoints and raise the extrusion top.'
 		layerThicknessRatioSquared = layerThicknessRatio * layerThicknessRatio
 		feedRateMinute = self.feedRateMinute * feedRateMultiplier / layerThicknessRatioSquared
