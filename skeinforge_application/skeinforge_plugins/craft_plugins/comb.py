@@ -31,6 +31,11 @@ The comb tool has created the file:
 """
 
 from __future__ import absolute_import
+try:
+	import psyco
+	psyco.full()
+except:
+	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -360,11 +365,13 @@ class CombSkein(object):
 			beginIndex = pointIndex - 1
 			if beginIndex >= 0:
 				begin = shortestPath[beginIndex]
+				# with "self.edgeWidth*2.0" better "combed"
 				centerPerpendicular = intercircle.getWiddershinsByLength(center, begin, self.edgeWidth*2.0)
 			centerEnd = None
 			endIndex = pointIndex + 1
 			if endIndex < len(shortestPath):
 				end = shortestPath[endIndex]
+				# with "self.edgeWidth*2.0" better "combed"
 				centerEnd = intercircle.getWiddershinsByLength(end, center, self.edgeWidth*2.0)
 			if centerPerpendicular == None:
 				centerPerpendicular = centerEnd
