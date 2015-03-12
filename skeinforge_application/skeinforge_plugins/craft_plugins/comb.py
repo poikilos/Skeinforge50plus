@@ -365,13 +365,13 @@ class CombSkein(object):
 			beginIndex = pointIndex - 1
 			if beginIndex >= 0:
 				begin = shortestPath[beginIndex]
-				# with "self.edgeWidth*2.0" better "combed"
+				# with "self.edgeWidth*2.0" better "combed". See calibration file comb_test.stl .
 				centerPerpendicular = intercircle.getWiddershinsByLength(center, begin, self.edgeWidth*2.0)
 			centerEnd = None
 			endIndex = pointIndex + 1
 			if endIndex < len(shortestPath):
 				end = shortestPath[endIndex]
-				# with "self.edgeWidth*2.0" better "combed"
+				# with "self.edgeWidth*2.0" better "combed". See calibration file comb_test.stl .
 				centerEnd = intercircle.getWiddershinsByLength(end, center, self.edgeWidth*2.0)
 			if centerPerpendicular == None:
 				centerPerpendicular = centerEnd
