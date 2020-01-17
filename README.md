@@ -32,6 +32,14 @@ Skeinforge50plus
   - I will see what I can recover from the wayback machine.
 
 ## Tasks
+- [ ] Add G-Code viewer, such as (see
+  ~/git/1.todo/G-Code_viewers_for_Python/ on Poikilos' Linux PC):
+  - ~~https://github.com/jonathanwin/yagv~~
+  - https://github.com/FMMT666/yagv-ng
+  - https://github.com/poikilos/GCodeViewer
+    (fork of PeachyPrinter/GCodeViewer)
+  - https://github.com/dkobozev/tatlin
+  - https://github.com/C3Dm/GCodeViewer (matplotlib+numpy)
 - [ ] Consider PyPy for JIT compiling.
 - [x] Add later tweaks--consider forking from indazoo's fork:
   [nophead/Skeinforge50plus](https://github.com/nophead/Skeinforge50plus)
@@ -63,8 +71,9 @@ Skeinforge50plus
   - https://github.com/garyhodgson/SkeinforgeEngine
     - http://garyhodgson.github.io/SkeinforgeEngine/apidocs/plugins.comb-module.html
   - http://buildatron.com/facts-sfact
-- [ ] Implement Veroni supports
-  - [x] wait until a license gets added to voronizer (I
+- [ ] Implement Veroni supports from
+  <https://github.com/poikilos/voronizer>
+  - [x] wait until a license gets added to upstream voronizer (I
     [requested](https://github.com/tjwill95/voronizer/issues/1) that).
 - [ ] Implement automatic model turning for least support using
   turnit if license gets added (I
@@ -72,6 +81,8 @@ Skeinforge50plus
 - [ ] Make temperature tower feature: Allow user to merely enter the max
   and min temperature for the filament).
 - [ ] Pick a different name (see "Possible Alternate Names" below)
+- [ ] Import Cura profiles such as
+  <https://www.3dprintedtabletop.com/resources/3d-printing-profiles/>
 
 ## History of Skeinforge Author's Website
 - The original author is Enrique Perez according to
@@ -103,6 +114,13 @@ Skeinforge50plus
 ## Developer Notes
 ### Possible Alternate Names
 - SFR Slicer (Skein Reborn Slicer)
+- PastaForge (used by a food company but that is not in the same
+  industry so its ok to use)
+- PasteForge
+
+### Reference
+- https://www.simplify3d.com/support/articles/3d-printing-gcode-tutorial/
+- (Marlin[/Sprinter]) http://marlinfw.org/docs/gcode/G000-G001.html
 
 ### indazoo's notes
 Skeinforge50 (the last release from Enrique) with a few tweaks:
